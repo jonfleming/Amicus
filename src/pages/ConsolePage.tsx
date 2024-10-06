@@ -19,7 +19,7 @@ import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
 import { instructions } from '../utils/conversation_config.js';
 import { WavRenderer } from '../utils/wav_renderer';
 
-import { X, Edit, Zap, ArrowUp, ArrowDown } from 'react-feather';
+import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff } from 'react-feather';
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
@@ -124,6 +124,7 @@ export function ConsolePage() {
     lng: -122.418137,
   });
   const [marker, setMarker] = useState<Coordinates | null>(null);
+  const [showEventLog, setShowEventLog] = useState(true);
 
   /**
    * Utility for formatting the timing of logs
@@ -523,81 +524,83 @@ export function ConsolePage() {
         </div>
       </div>
       <div className="content-main">
-        <div className="content-logs">
-          <div className="content-block events">
-            <div className="visualization">
-              <div className="visualization-entry client">
-                <canvas ref={clientCanvasRef} />
+        <div className={`content-logs ${showEventLog ? '' : 'expanded-conversation'}`}>
+          {showEventLog && (
+            <div className="content-block events">
+              <div className="visualization">
+                <div className="visualization-entry client">
+                  <canvas ref={clientCanvasRef} />
+                </div>
+                <div className="visualization-entry server">
+                  <canvas ref={serverCanvasRef} />
+                </div>
               </div>
-              <div className="visualization-entry server">
-                <canvas ref={serverCanvasRef} />
-              </div>
-            </div>
-            <div className="content-block-title">events</div>
-            <div className="content-block-body" ref={eventsScrollRef}>
-              {!realtimeEvents.length && `awaiting connection...`}
-              {realtimeEvents.map((realtimeEvent, i) => {
-                const count = realtimeEvent.count;
-                const event = { ...realtimeEvent.event };
-                if (event.type === 'input_audio_buffer.append') {
-                  event.audio = `[trimmed: ${event.audio.length} bytes]`;
-                } else if (event.type === 'response.audio.delta') {
-                  event.delta = `[trimmed: ${event.delta.length} bytes]`;
-                }
-                return (
-                  <div className="event" key={event.event_id}>
-                    <div className="event-timestamp">
-                      {formatTime(realtimeEvent.time)}
-                    </div>
-                    <div className="event-details">
-                      <div
-                        className="event-summary"
-                        onClick={() => {
-                          // toggle event details
-                          const id = event.event_id;
-                          const expanded = { ...expandedEvents };
-                          if (expanded[id]) {
-                            delete expanded[id];
-                          } else {
-                            expanded[id] = true;
-                          }
-                          setExpandedEvents(expanded);
-                        }}
-                      >
-                        <div
-                          className={`event-source ${
-                            event.type === 'error'
-                              ? 'error'
-                              : realtimeEvent.source
-                          }`}
-                        >
-                          {realtimeEvent.source === 'client' ? (
-                            <ArrowUp />
-                          ) : (
-                            <ArrowDown />
-                          )}
-                          <span>
-                            {event.type === 'error'
-                              ? 'error!'
-                              : realtimeEvent.source}
-                          </span>
-                        </div>
-                        <div className="event-type">
-                          {event.type}
-                          {count && ` (${count})`}
-                        </div>
+              <div className="content-block-title">events</div>
+              <div className="content-block-body" ref={eventsScrollRef}>
+                {!realtimeEvents.length && `awaiting connection...`}
+                {realtimeEvents.map((realtimeEvent, i) => {
+                  const count = realtimeEvent.count;
+                  const event = { ...realtimeEvent.event };
+                  if (event.type === 'input_audio_buffer.append') {
+                    event.audio = `[trimmed: ${event.audio.length} bytes]`;
+                  } else if (event.type === 'response.audio.delta') {
+                    event.delta = `[trimmed: ${event.delta.length} bytes]`;
+                  }
+                  return (
+                    <div className="event" key={event.event_id}>
+                      <div className="event-timestamp">
+                        {formatTime(realtimeEvent.time)}
                       </div>
-                      {!!expandedEvents[event.event_id] && (
-                        <div className="event-payload">
-                          {JSON.stringify(event, null, 2)}
+                      <div className="event-details">
+                        <div
+                          className="event-summary"
+                          onClick={() => {
+                            // toggle event details
+                            const id = event.event_id;
+                            const expanded = { ...expandedEvents };
+                            if (expanded[id]) {
+                              delete expanded[id];
+                            } else {
+                              expanded[id] = true;
+                            }
+                            setExpandedEvents(expanded);
+                          }}
+                        >
+                          <div
+                            className={`event-source ${
+                              event.type === 'error'
+                                ? 'error'
+                                : realtimeEvent.source
+                            }`}
+                          >
+                            {realtimeEvent.source === 'client' ? (
+                              <ArrowUp />
+                            ) : (
+                              <ArrowDown />
+                            )}
+                            <span>
+                              {event.type === 'error'
+                                ? 'error!'
+                                : realtimeEvent.source}
+                            </span>
+                          </div>
+                          <div className="event-type">
+                            {event.type}
+                            {count && ` (${count})`}
+                          </div>
                         </div>
-                      )}
+                        {!!expandedEvents[event.event_id] && (
+                          <div className="event-payload">
+                            {JSON.stringify(event, null, 2)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
           <div className="content-block conversation">
             <div className="content-block-title">conversation</div>
             <div className="content-block-body" data-conversation-content>
@@ -668,6 +671,13 @@ export function ConsolePage() {
               labels={['manual', 'vad']}
               values={['none', 'server_vad']}
               onChange={(_, value) => changeTurnEndType(value)}
+            />
+            <div className="spacer" />
+            <Button
+              icon={showEventLog ? EyeOff : Eye}
+              buttonStyle="flush"
+              onClick={() => setShowEventLog(!showEventLog)}
+              label={showEventLog ? "Hide Events" : "Show Events"}
             />
             <div className="spacer" />
             {isConnected && canPushToTalk && (
