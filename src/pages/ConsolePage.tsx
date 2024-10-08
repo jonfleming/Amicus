@@ -9,7 +9,7 @@
  * You can run it with `npm run relay`, in parallel with `npm start`
  */
 const LOCAL_RELAY_SERVER_URL: string =
-  process.env.REACT_APP_LOCAL_RELAY_SERVER_URL || '';
+  process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 
@@ -61,8 +61,8 @@ export function ConsolePage() {
    */
   const apiKey = LOCAL_RELAY_SERVER_URL
     ? ''
-    : localStorage.getItem('tmp::voice_api_key') ||
-      prompt('OpenAI API Key') ||
+    : localStorage.getItem('tmp::voice_api_key') ??
+      prompt('OpenAI API Key') ??
       '';
   if (apiKey !== '') {
     localStorage.setItem('tmp::voice_api_key', apiKey);
@@ -462,7 +462,7 @@ export function ConsolePage() {
         const lastEvent = realtimeEvents[realtimeEvents.length - 1];
         if (lastEvent?.event.type === realtimeEvent.event.type) {
           // if we receive multiple events in a row, aggregate them for display purposes
-          lastEvent.count = (lastEvent.count || 0) + 1;
+          lastEvent.count = (lastEvent.count ?? 0) + 1;
           return realtimeEvents.slice(0, -1).concat(lastEvent);
         } else {
           return realtimeEvents.concat(realtimeEvent);
@@ -508,7 +508,7 @@ export function ConsolePage() {
     <div data-component="ConsolePage">
       <div className="content-top">
         <div className="content-title">
-          <img src="/openai-logomark.svg" />
+          <img src="/openai-logomark.svg" alt="OpenAI logo" />
           <span>realtime console</span>
         </div>
         <div className="content-api-key">

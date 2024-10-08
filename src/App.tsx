@@ -3,7 +3,7 @@ import './App.scss';
 
 function App() {
   return (
-    <div data-component="App">
+    <div data-component="App" data-testid="App">
       <ConsolePage />
     </div>
   );

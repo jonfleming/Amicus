@@ -49,6 +49,8 @@ export function Toggle({
       data-component="Toggle"
       onClick={toggleValue}
       data-enabled={value.toString()}
+      data-testid="Switch"
+      aria-checked={value}
     >
       {labels && (
         <div className="label left" ref={leftRef}>
