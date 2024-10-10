@@ -27,7 +27,7 @@
     "ws": "^8.18.0"
   },
   "scripts": {
-    "start": "cross-env REACT_APP_LOCAL_RELAY_SERVER_URL=http://localhost:8081 react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

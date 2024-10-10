@@ -19,7 +19,7 @@ import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
 import { instructions } from '../utils/conversation_config.js';
 import { WavRenderer } from '../utils/wav_renderer';
 
-import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff } from 'react-feather';
+import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff, ChevronRight, ChevronLeft } from 'react-feather';
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
@@ -125,6 +125,12 @@ export function ConsolePage() {
   });
   const [marker, setMarker] = useState<Coordinates | null>(null);
   const [showEventLog, setShowEventLog] = useState(true);
+
+  // Add new state variables to track if tools have been used
+  const [weatherToolUsed, setWeatherToolUsed] = useState(false);
+  const [memoryToolUsed, setMemoryToolUsed] = useState(false);
+
+  const [showSidebar, setShowSidebar] = useState(true);
 
   /**
    * Utility for formatting the timing of logs
@@ -409,6 +415,7 @@ export function ConsolePage() {
           newKv[key] = value;
           return newKv;
         });
+        setMemoryToolUsed(true); // Set this to true when the tool is used
         return { ok: true };
       }
     );
@@ -452,6 +459,7 @@ export function ConsolePage() {
           units: json.current_units.wind_speed_10m as string,
         };
         setMarker({ lat, lng, location, temperature, wind_speed });
+        setWeatherToolUsed(true); // Set this to true when the tool is used
         return json;
       }
     );
@@ -522,9 +530,16 @@ export function ConsolePage() {
             />
           )}
         </div>
+        {/* Add the sidebar toggle button here */}
+        <Button
+          icon={showSidebar ? ChevronLeft : ChevronRight}
+          buttonStyle="flush"
+          onClick={() => setShowSidebar(!showSidebar)}
+          label={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
+        />
       </div>
       <div className="content-main">
-        <div className={`content-logs ${showEventLog ? '' : 'expanded-conversation'}`}>
+        <div className={`content-logs ${!showSidebar ? 'expanded' : ''} ${showEventLog ? '' : 'expanded-conversation'}`}>
           {showEventLog && (
             <div className="content-block events">
               <div className="visualization">
@@ -701,40 +716,46 @@ export function ConsolePage() {
             />
           </div>
         </div>
-        <div className="content-right">
-          <div className="content-block map">
-            <div className="content-block-title">get_weather()</div>
-            <div className="content-block-title bottom">
-              {marker?.location || 'not yet retrieved'}
-              {!!marker?.temperature && (
-                <>
-                  <br />
-                  🌡️ {marker.temperature.value} {marker.temperature.units}
-                </>
-              )}
-              {!!marker?.wind_speed && (
-                <>
-                  {' '}
-                  🍃 {marker.wind_speed.value} {marker.wind_speed.units}
-                </>
-              )}
-            </div>
-            <div className="content-block-body full">
-              {coords && (
-                <Map
-                  center={[coords.lat, coords.lng]}
-                  location={coords.location}
-                />
-              )}
-            </div>
+        {showSidebar && (
+          <div className="content-right">
+            {weatherToolUsed && (
+              <div className="content-block map">
+                <div className="content-block-title">get_weather()</div>
+                <div className="content-block-title bottom">
+                  {marker?.location || 'not yet retrieved'}
+                  {!!marker?.temperature && (
+                    <>
+                      <br />
+                      🌡️ {marker.temperature.value} {marker.temperature.units}
+                    </>
+                  )}
+                  {!!marker?.wind_speed && (
+                    <>
+                      {' '}
+                      🍃 {marker.wind_speed.value} {marker.wind_speed.units}
+                    </>
+                  )}
+                </div>
+                <div className="content-block-body full">
+                  {coords && (
+                    <Map
+                      center={[coords.lat, coords.lng]}
+                      location={coords.location}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+            {memoryToolUsed && (
+              <div className="content-block kv">
+                <div className="content-block-title">set_memory()</div>
+                <div className="content-block-body content-kv">
+                  {JSON.stringify(memoryKv, null, 2)}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="content-block kv">
-            <div className="content-block-title">set_memory()</div>
-            <div className="content-block-body content-kv">
-              {JSON.stringify(memoryKv, null, 2)}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
