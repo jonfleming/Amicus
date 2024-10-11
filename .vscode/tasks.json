@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Relay",
+      "type": "shell",
+      "command": "node relay-server/index.js",
+      "problemMatcher": [
+        {
+          "owner": "custom",
+          "pattern": [
+            {
+              "regexp": "\\[RealtimeRelay\\] Listening on ws://localhost:8081",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "\\[RealtimeRelay\\]",
+            "endsPattern": "Listening on ws://localhost:8081"
+          }
+        }
+      ],
+      "isBackground": true
+    },
+    {
+      "label": "Start App",
+      "type": "shell",
+      "command": "npm start",
+      "problemMatcher": [],
+      "isBackground": true
+    }
+  ]
+}
