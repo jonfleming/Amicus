@@ -32,5 +32,13 @@
       "problemMatcher": [],
       "isBackground": true
     }
+  ],
+  "inputs": [],
+  "compounds": [
+    {
+      "label": "Run Relay and Start App",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Run Relay", "Start App"]
+    }
   ]
 }

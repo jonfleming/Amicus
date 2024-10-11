@@ -18,7 +18,7 @@
     {
       "name": "Run Relay and Start App",
       "configurations": ["Run Relay", "Start App", "Debug React App"],
-      "preLaunchTask": "Run Relay"
+      "preLaunchTask": "Run Relay and Start App"
     }
   ]
 }
