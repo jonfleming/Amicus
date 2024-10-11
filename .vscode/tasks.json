@@ -29,16 +29,26 @@
       "label": "Start App",
       "type": "shell",
       "command": "npm start",
-      "problemMatcher": [],
-      "isBackground": true
+      "isBackground": true,
+      "dependsOn": ["Run Relay"],
+      "problemMatcher": [
+        {
+          "owner": "custom",
+          "pattern": [
+            {
+              "regexp": "http://localhost:3000",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "Compiled successfully",
+            "endsPattern": "http://localhost:3000"
+          }
+        }
+      ]
     }
   ],
-  "inputs": [],
-  "compounds": [
-    {
-      "label": "Run Relay and Start App",
-      "dependsOrder": "sequence",
-      "dependsOn": ["Run Relay", "Start App"]
-    }
-  ]
 }
