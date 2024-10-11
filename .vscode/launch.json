@@ -10,8 +10,15 @@
       "sourceMaps": true,
       "sourceMapPathOverrides": {
         "webpack:///src/*": "${webRoot}/*"
-      },      
+      },
       "trace": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Relay and Start App",
+      "configurations": ["Debug React App"],
+      "preLaunchTask": "Run Relay"
     }
   ]
 }
