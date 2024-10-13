@@ -1,8 +1,15 @@
 {
   "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Launch",
+      "configurations": ["Debug"],
+      "preLaunchTask": "Start App"
+    }
+  ],
   "configurations": [
     {
-      "name": "Debug React App",
+      "name": "Debug",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:3000",
@@ -14,11 +21,4 @@
       "trace": true
     }
   ],
-  "compounds": [
-    {
-      "name": "Run Relay and Start App",
-      "configurations": ["Debug React App"],
-      "preLaunchTask": "Start App"
-    }
-  ]
 }
