@@ -3,6 +3,12 @@
     "sourceType": "module"
   },
   "env": {
-    "es2022": true
+    "es2020": true
+  },
+  "globals": {
+    "globalThis": true
+  },
+  "rules": {
+    "no-undef": "off",
   }
 }

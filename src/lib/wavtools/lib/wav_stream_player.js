@@ -157,4 +157,4 @@ export class WavStreamPlayer {
   }
 }
 
-globalThis.WavStreamPlayer = WavStreamPlayer;
+global.globalThis.WavStreamPlayer = WavStreamPlayer;

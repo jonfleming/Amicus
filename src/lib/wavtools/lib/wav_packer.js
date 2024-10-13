@@ -110,4 +110,4 @@ export class WavPacker {
   }
 }
 
-globalThis.WavPacker = WavPacker;
+global.globalThis.WavPacker = WavPacker;

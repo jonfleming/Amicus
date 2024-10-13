@@ -200,4 +200,4 @@ export class AudioAnalysis {
   }
 }
 
-globalThis.AudioAnalysis = AudioAnalysis;
+global.globalThis.AudioAnalysis = AudioAnalysis;

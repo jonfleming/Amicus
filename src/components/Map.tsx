@@ -1,5 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { LatLngTuple } from 'leaflet';
+import React from 'react';
 import './Map.scss';
 
 function ChangeView({ center, zoom }: { center: LatLngTuple; zoom: number }) {

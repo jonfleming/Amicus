@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-
+import React from 'react';
 import './Toggle.scss';
 
 export function Toggle({

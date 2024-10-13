@@ -1,4 +1,5 @@
 import { ConsolePage } from './pages/ConsolePage';
+import React from 'react';
 import './App.scss';
 
 function App() {

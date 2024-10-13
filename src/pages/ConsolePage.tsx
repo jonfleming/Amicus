@@ -8,8 +8,6 @@
  * This will also require you to set OPENAI_API_KEY= in a `.env` file
  * You can run it with `npm run relay`, in parallel with `npm start`
  */
-const LOCAL_RELAY_SERVER_URL: string =
-  process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 
@@ -23,10 +21,13 @@ import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff, ChevronRight, ChevronLef
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
+import { AvatarViewer } from '../components/AvatarViewer';
+import React from 'react';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
 
+const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 /**
  * Type for result from get_weather() function call
  */
@@ -535,11 +536,15 @@ export function ConsolePage() {
           icon={showSidebar ? ChevronLeft : ChevronRight}
           buttonStyle="flush"
           onClick={() => setShowSidebar(!showSidebar)}
-          label={showSidebar ? "Hide Sidebar" : "Show Sidebar"}
+          label={showSidebar ? 'Hide Sidebar' : 'Show Sidebar'}
         />
       </div>
       <div className="content-main">
-        <div className={`content-logs ${!showSidebar ? 'expanded' : ''} ${showEventLog ? '' : 'expanded-conversation'}`}>
+        <div
+          className={`content-logs ${!showSidebar ? 'expanded' : ''} ${
+            showEventLog ? '' : 'expanded-conversation'
+          }`}
+        >
           {showEventLog && (
             <div className="content-block events">
               <div className="visualization">
@@ -692,7 +697,7 @@ export function ConsolePage() {
               icon={showEventLog ? EyeOff : Eye}
               buttonStyle="flush"
               onClick={() => setShowEventLog(!showEventLog)}
-              label={showEventLog ? "Hide Events" : "Show Events"}
+              label={showEventLog ? 'Hide Events' : 'Show Events'}
             />
             <div className="spacer" />
             {isConnected && canPushToTalk && (
@@ -754,6 +759,12 @@ export function ConsolePage() {
                 </div>
               </div>
             )}
+            <div className="content-block avatar">
+              <div className="content-block-title">Avatar Viewer</div>
+              <div className="content-block-body">
+                <AvatarViewer />
+              </div>
+            </div>
           </div>
         )}
       </div>
