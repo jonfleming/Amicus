@@ -25,7 +25,8 @@ import { AvatarViewer } from '../components/AvatarViewer';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
-
+import {textToVisemes} from '../lib/animation/viseme.js';
+import {Animator} from '../lib/animation/animator.js';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 /**
@@ -81,6 +82,10 @@ export function ConsolePage() {
   const wavStreamPlayerRef = useRef<WavStreamPlayer>(
     new WavStreamPlayer({ sampleRate: 24000 })
   );
+  const animatorRef = useRef<Animator>(
+    new Animator( )
+  )
+
   const clientRef = useRef<RealtimeClient>(
     new RealtimeClient(
       LOCAL_RELAY_SERVER_URL
@@ -168,7 +173,7 @@ export function ConsolePage() {
 
   /**
    * Connect to conversation:
-   * WavRecorder taks speech input, WavStreamPlayer output, client is API client
+   * WavRecorder takes speech input, WavStreamPlayer output, client is API client
    */
   const connectConversation = useCallback(async () => {
     const client = clientRef.current;
@@ -383,6 +388,7 @@ export function ConsolePage() {
     // Get refs
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
+    const animator = animatorRef.current;
 
     // Set instructions
     client.updateSession({ instructions: instructions });
@@ -488,8 +494,14 @@ export function ConsolePage() {
     });
     client.on('conversation.updated', async ({ item, delta }: any) => {
       const items = client.conversation.getItems();
+      console.log('update:', item, delta);
+
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
+      }
+      if (delta?.transcript) {
+        const viseme = textToVisemes(delta.transcript);
+        animator.addViseme(viseme);
       }
       if (item.status === 'completed' && item.formatted.audio?.length) {
         const wavFile = await WavRecorder.decode(
