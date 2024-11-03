@@ -22,6 +22,7 @@ import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
 import { AvatarViewer } from '../components/AvatarViewer';
+import { MorphControls } from '../components/MorphControls';
 
 import './ConsolePage.scss';
 import { isJsxOpeningLikeElement } from 'typescript';
@@ -137,7 +138,17 @@ export function ConsolePage() {
   const [memoryToolUsed, setMemoryToolUsed] = useState(false);
 
   const [showSidebar, setShowSidebar] = useState(true);
+  
+  // State for morph targets
+  const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
 
+  const handleMorphTargetChange = (name: string, value: number) => {
+    setMorphTargets(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
   /**
    * Utility for formatting the timing of logs
    */
@@ -774,7 +785,11 @@ export function ConsolePage() {
             <div className="content-block avatar">
               <div className="content-block-title">Avatar Viewer</div>
               <div className="content-block-body">
-                <AvatarViewer />
+                <AvatarViewer morphTargets={morphTargets} />
+                <MorphControls 
+                  morphTargets={morphTargets}
+                  onMorphTargetChange={handleMorphTargetChange}                
+                />
               </div>
             </div>
           </div>
