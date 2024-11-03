@@ -11,7 +11,7 @@ export class Animator {
             this.update();
         }, 250); // 4 FPS
 
-        console.log("Animation started with queue:", queue);
+        console.log("Animation started with queue:", this.queue);
     }
 
     update() {
@@ -25,6 +25,9 @@ export class Animator {
     }
 
     addViseme(viseme) {
+        if (!this.queue) {
+            this.start();
+        }
         this.queue.push(viseme);
         console.log("Viseme added to queue:", viseme);
     }
