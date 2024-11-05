@@ -21,11 +21,12 @@ import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff, ChevronRight, ChevronLef
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
-import { AvatarViewer } from '../components/AvatarViewer';
+import { Scene } from '../components/Scene';
+import { MorphControls } from '../components/MorphControls';
 
 import './ConsolePage.scss';
-import { isJsxOpeningLikeElement } from 'typescript';
-
+import {textToVisemes} from '../lib/animation/viseme.js';
+import {Animator} from '../lib/animation/animator.js';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 /**
@@ -69,6 +70,16 @@ export function ConsolePage() {
     localStorage.setItem('tmp::voice_api_key', apiKey);
   }
 
+  // add state for morph targets
+  const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
+
+  const handleMorphTargetChange = (name: string, value: number) => {
+    setMorphTargets(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
   /**
    * Instantiate:
    * - WavRecorder (speech input)
@@ -81,6 +92,10 @@ export function ConsolePage() {
   const wavStreamPlayerRef = useRef<WavStreamPlayer>(
     new WavStreamPlayer({ sampleRate: 24000 })
   );
+  const animatorRef = useRef<Animator>(
+    new Animator( )
+  )
+
   const clientRef = useRef<RealtimeClient>(
     new RealtimeClient(
       LOCAL_RELAY_SERVER_URL
@@ -132,7 +147,7 @@ export function ConsolePage() {
   const [memoryToolUsed, setMemoryToolUsed] = useState(false);
 
   const [showSidebar, setShowSidebar] = useState(true);
-
+  
   /**
    * Utility for formatting the timing of logs
    */
@@ -168,7 +183,7 @@ export function ConsolePage() {
 
   /**
    * Connect to conversation:
-   * WavRecorder taks speech input, WavStreamPlayer output, client is API client
+   * WavRecorder takes speech input, WavStreamPlayer output, client is API client
    */
   const connectConversation = useCallback(async () => {
     const client = clientRef.current;
@@ -383,6 +398,7 @@ export function ConsolePage() {
     // Get refs
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
+    const animator = animatorRef.current;
 
     // Set instructions
     client.updateSession({ instructions: instructions });
@@ -488,8 +504,14 @@ export function ConsolePage() {
     });
     client.on('conversation.updated', async ({ item, delta }: any) => {
       const items = client.conversation.getItems();
+      console.log('update:', item, delta);
+
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
+      }
+      if (delta?.transcript) {
+        const viseme = textToVisemes(delta.transcript);
+        animator.addViseme(viseme);
       }
       if (item.status === 'completed' && item.formatted.audio?.length) {
         const wavFile = await WavRecorder.decode(
@@ -762,8 +784,14 @@ export function ConsolePage() {
             <div className="content-block avatar">
               <div className="content-block-title">Avatar Viewer</div>
               <div className="content-block-body">
-                <AvatarViewer />
+              <Scene morphTargets={morphTargets} />
               </div>
+            </div>
+            <div className="content-block morph-controls">
+              <MorphControls 
+                morphTargets={morphTargets}
+                onMorphTargetChange={handleMorphTargetChange}
+              />              
             </div>
           </div>
         )}

@@ -1,6 +1,5 @@
 import { StreamProcessorSrc } from './worklets/stream_processor.js';
 import { AudioAnalysis } from './analysis/audio_analysis.js';
-import  Pocketsphinx from 'pocketsphinx';
 
 /**
  * Plays audio streams received in raw PCM16 chunks from the browser
@@ -21,6 +20,7 @@ export class WavStreamPlayer {
     this.trackSampleOffsets = {};
     this.interruptedTrackIds = {};
     this.audioBuffers = [];
+    this.visemeData = [];
   }
 
   /**
@@ -122,14 +122,6 @@ export class WavStreamPlayer {
     this.audioBuffers.push(buffer);
     this.stream.port.postMessage({ event: 'write', buffer, trackId });
 
-    // Process the buffer with pocketsphinx.js
-    const recognizer = new Pocketsphinx();
-    recognizer.process(buffer, (visemes) => {
-      console.log('Viseme data:', visemes);
-      // Use viseme data for animation
-
-    });
-
     return buffer;
   }
 
@@ -151,7 +143,7 @@ export class WavStreamPlayer {
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = filePath;
+    a.download = filePath + ".wav";
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
