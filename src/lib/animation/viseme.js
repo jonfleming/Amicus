@@ -2,47 +2,47 @@
 // Using a simplified set of visemes based on common mouth positions
 const phonemeToVisemeMap = {
     // Vowels
-    'AA': 'ah',  // hot
-    'AE': 'ah',  // cat
-    'AH': 'ah',  // but
-    'AO': 'oh',  // caught
-    'AW': 'oh',  // cow
-    'AY': 'ah',  // hide
-    'EH': 'eh',  // red
-    'ER': 'er',  // bird
-    'EY': 'eh',  // say
-    'IH': 'ih',  // sit
-    'IY': 'ih',  // see
-    'OW': 'oh',  // show
-    'OY': 'oh',  // toy
-    'UH': 'oh',  // could
-    'UW': 'oh',  // too
+    'AA': 'viseme_aa',  // hot
+    'AE': 'viseme_aa',  // cat
+    'AH': 'viseme_aa',  // but
+    'AO': 'viseme_aa',  // caught
+    'AW': 'viseme_aa',  // cow
+    'AY': 'viseme_aa',  // hide
+    'EH': 'viseme_E',  // red
+    'ER': 'viseme_aa',  // bird
+    'EY': 'viseme_aa',  // say
+    'IH': 'viseme_aa',  // sit
+    'IY': 'viseme_aa',  // see
+    'OW': 'viseme_aa',  // show
+    'OY': 'viseme_aa',  // toy
+    'UH': 'viseme_aa',  // could
+    'UW': 'viseme_aa',  // too
   
     // Consonants
-    'B': 'p',    // be
-    'CH': 'ch',  // cheese
-    'D': 't',    // dee
-    'DH': 'th',  // thee
-    'F': 'f',    // fee
-    'G': 'k',    // green
-    'HH': 'ah',  // he
-    'JH': 'ch',  // joy
-    'K': 'k',    // key
-    'L': 'l',    // lee
-    'M': 'p',    // me
-    'N': 't',    // knee
-    'NG': 'k',   // ping
-    'P': 'p',    // pee
-    'R': 'er',   // read
-    'S': 's',    // sea
-    'SH': 'ch',  // she
-    'T': 't',    // tea
-    'TH': 'th',  // thin
-    'V': 'f',    // vee
-    'W': 'oh',   // we
-    'Y': 'ih',   // yield
-    'Z': 's',    // zee
-    'ZH': 'ch'   // vision
+    'B':  'viseme_PP',    // be
+    'CH': 'viseme_CH',  // cheese
+    'D':  'viseme_DD',    // dee
+    'DH': 'viseme_TH',  // thee
+    'F':  'viseme_FF',    // fee
+    'G':  'viseme_kk',    // green
+    'HH': 'viseme_aa',  // he
+    'JH': 'viseme_CH',  // joy
+    'K':  'viseme_kk',    // key
+    'L':  'viseme_nn',    // lee
+    'M':  'viseme_pp',    // me
+    'N':  'viseme_nn',    // knee
+    'NG': 'viseme_KK',   // ping
+    'P':  'viseme_PP',    // pee
+    'R':  'viseme_aa',   // read
+    'S':  'viseme_SS',    // sea
+    'SH': 'viseme_CH',  // she
+    'T':  'viseme_I',    // tea
+    'TH': 'viseme_TH',  // thin
+    'V':  'viseme_FF',    // vee
+    'W':  'viseme_aa',   // we
+    'Y':  'viseme_aa',   // yield
+    'Z':  'viseme_SS',    // zee
+    'ZH': 'viseme_CH'   // vision
   };
   
   // CMU Dictionary-style pronunciation rules
