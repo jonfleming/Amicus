@@ -11,10 +11,10 @@ function ChangeView({ center, zoom }: { center: LatLngTuple; zoom: number }) {
 export function Map({
   center,
   location = 'My Location',
-}: {
+}: Readonly<{
   center: LatLngTuple;
   location?: string;
-}) {
+}>) {
   return (
     <div data-component="Map">
       <MapContainer

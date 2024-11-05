@@ -80,9 +80,11 @@ export function AvatarViewer({ morphTargets }: AvatarProps) {
   // Update morph target influences when they change
   useEffect(() => {
     const head = group.current?.getObjectByName('Wolf3D_Head') as SkinnedMesh;
+    console.log("UseEffect: ", head);
     if (head?.morphTargetDictionary && head?.morphTargetInfluences) {
       Object.entries(morphTargets).forEach(([name, value]) => {
         if (head.morphTargetDictionary) {
+          console.log("morphTargets: ", morphTargets);
           const index = head.morphTargetDictionary[name];
           if (typeof index !== 'undefined') {
             if (head.morphTargetInfluences) {

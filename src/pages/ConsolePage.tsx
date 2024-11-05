@@ -21,11 +21,10 @@ import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff, ChevronRight, ChevronLef
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
-import { AvatarViewer } from '../components/AvatarViewer';
+import { Scene } from '../components/Scene';
 import { MorphControls } from '../components/MorphControls';
 
 import './ConsolePage.scss';
-import { isJsxOpeningLikeElement } from 'typescript';
 import {textToVisemes} from '../lib/animation/viseme.js';
 import {Animator} from '../lib/animation/animator.js';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
@@ -71,6 +70,16 @@ export function ConsolePage() {
     localStorage.setItem('tmp::voice_api_key', apiKey);
   }
 
+  // add state for morph targets
+  const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
+
+  const handleMorphTargetChange = (name: string, value: number) => {
+    setMorphTargets(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
   /**
    * Instantiate:
    * - WavRecorder (speech input)
@@ -138,16 +147,6 @@ export function ConsolePage() {
   const [memoryToolUsed, setMemoryToolUsed] = useState(false);
 
   const [showSidebar, setShowSidebar] = useState(true);
-  
-  // State for morph targets
-  const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
-
-  const handleMorphTargetChange = (name: string, value: number) => {
-    setMorphTargets(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
   
   /**
    * Utility for formatting the timing of logs
@@ -785,12 +784,14 @@ export function ConsolePage() {
             <div className="content-block avatar">
               <div className="content-block-title">Avatar Viewer</div>
               <div className="content-block-body">
-                <AvatarViewer morphTargets={morphTargets} />
-                <MorphControls 
-                  morphTargets={morphTargets}
-                  onMorphTargetChange={handleMorphTargetChange}                
-                />
+              <Scene morphTargets={morphTargets} />
               </div>
+            </div>
+            <div className="content-block morph-controls">
+              <MorphControls 
+                morphTargets={morphTargets}
+                onMorphTargetChange={handleMorphTargetChange}
+              />              
             </div>
           </div>
         )}
