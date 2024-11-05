@@ -57,29 +57,97 @@ interface RealtimeEvent {
 }
 
 export function ConsolePage() {
-  /**
-   * Ask user for API Key
-   * If we're using the local relay server, we don't need this
-   */
-  const apiKey = LOCAL_RELAY_SERVER_URL
-    ? ''
-    : localStorage.getItem('tmp::voice_api_key') ??
-      prompt('OpenAI API Key') ??
-      '';
-  if (apiKey !== '') {
-    localStorage.setItem('tmp::voice_api_key', apiKey);
-  }
-
   // add state for morph targets
   const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
 
   const handleMorphTargetChange = (name: string, value: number) => {
+    console.log('handleMorphTargetChange: ', name, value);
     setMorphTargets(prev => ({
       ...prev,
       [name]: value
     }));
   };
   
+  const clearMorphTargets = () => {
+    setMorphTargets(prev =>{
+      const newTarget: Record<string, number> = {};
+      Object.keys(prev).forEach(key => {
+        newTarget[key] = 0;
+      });
+      return newTarget;
+    });
+  };
+
+  const phonemeRanges = {
+      'EE': [2000, 2300],   // as in "beat"
+      'IH': [1800, 2000],   // as in "bit"
+      'EH': [1600, 1800],   // as in "bet"
+      'AE': [1400, 1600],   // as in "bat"
+      'AA': [1000, 1200],   // as in "bot"
+      'AO': [900, 1000],    // as in "bought"
+      'UH': [800, 900],     // as in "book"
+      'OO': [600, 800],     // as in "boot"
+  };
+
+  // Map phonemes to standard visemes
+  const phonemeToViseme = {
+      'EE': 'viseme_E',
+      'IH': 'viseme_I',
+      'EH': 'viseme_E',
+      'AE': 'viseme_aa',
+      'AA': 'viseme_aa',
+      'AO': 'viseme_aa',
+      'UH': 'visemen_nn',
+      'OO': 'viseme_aa',
+  };
+
+  const getAverageFrequency = (frequencyData: Float32Array) => {
+    let count = 1;
+    let sum = 0;
+    
+    // Calculate frequency for each bin
+    for (const frequency of frequencyData) {
+      if (frequency === 0) {
+        continue;
+      }
+      sum += frequency;
+      count++;
+    }
+    
+    return 2300 * sum / count;
+  };
+
+  const getVisemeFromFrequencies = (frequency: number) => {
+    console.log('Average Frequency: ', frequency);
+    for (const [phoneme, range] of Object.entries(phonemeRanges)) {
+        if (frequency >= range[0] && frequency <= range[1]) {
+            return phonemeToViseme[phoneme as keyof typeof phonemeToViseme];
+        }
+    }
+  };
+
+  const setMorphTargetsFromFrequencies = (frequencies: Float32Array) => {
+    const frequency = getAverageFrequency(frequencies);
+    if (frequency === 0) {
+      return;
+    }
+
+    const viseme = getVisemeFromFrequencies(frequency);
+    // if (lastViseme) {
+    //   handleMorphTargetChange(lastViseme, 0);      
+    // }
+
+    if (viseme) {
+      console.log('Frequencies: ', frequencies);
+      console.log('Setting viseme: ', viseme);
+      handleMorphTargetChange(viseme, 0.5);
+      setTimeout(() => {
+        handleMorphTargetChange(viseme, 0)
+        }, 250);      
+      setLastViseme(viseme);
+    }
+  }
+
   /**
    * Instantiate:
    * - WavRecorder (speech input)
@@ -92,18 +160,15 @@ export function ConsolePage() {
   const wavStreamPlayerRef = useRef<WavStreamPlayer>(
     new WavStreamPlayer({ sampleRate: 24000 })
   );
+
   const animatorRef = useRef<Animator>(
-    new Animator( )
-  )
+    new Animator(handleMorphTargetChange, clearMorphTargets)
+  );
+
 
   const clientRef = useRef<RealtimeClient>(
     new RealtimeClient(
-      LOCAL_RELAY_SERVER_URL
-        ? { url: LOCAL_RELAY_SERVER_URL }
-        : {
-            apiKey: apiKey,
-            dangerouslyAllowAPIKeyInBrowser: true,
-          }
+      { url: LOCAL_RELAY_SERVER_URL }
     )
   );
 
@@ -148,6 +213,8 @@ export function ConsolePage() {
 
   const [showSidebar, setShowSidebar] = useState(true);
   
+  const [lastViseme, setLastViseme] = useState<string>('');
+
   /**
    * Utility for formatting the timing of logs
    */
@@ -167,18 +234,6 @@ export function ConsolePage() {
       return s;
     };
     return `${pad(m)}:${pad(s)}.${pad(hs)}`;
-  }, []);
-
-  /**
-   * When you click the API key
-   */
-  const resetAPIKey = useCallback(() => {
-    const apiKey = prompt('OpenAI API Key');
-    if (apiKey !== null) {
-      localStorage.clear();
-      localStorage.setItem('tmp::voice_api_key', apiKey);
-      window.location.reload();
-    }
   }, []);
 
   /**
@@ -344,9 +399,13 @@ export function ConsolePage() {
           clientCtx = clientCtx || clientCanvas.getContext('2d');
           if (clientCtx) {
             clientCtx.clearRect(0, 0, clientCanvas.width, clientCanvas.height);
-            const result = wavRecorder.recording
-              ? wavRecorder.getFrequencies('voice')
-              : { values: new Float32Array([0]) };
+            let result;
+            if (wavRecorder.recording) {
+              result = wavRecorder.getFrequencies('voice')
+              console.log("Frequency: ", result);
+            } else {
+              result = { values: new Float32Array([0]) };              
+            }            
             WavRenderer.drawBars(
               clientCanvas,
               clientCtx,
@@ -366,9 +425,15 @@ export function ConsolePage() {
           serverCtx = serverCtx || serverCanvas.getContext('2d');
           if (serverCtx) {
             serverCtx.clearRect(0, 0, serverCanvas.width, serverCanvas.height);
-            const result = wavStreamPlayer.analyser
-              ? wavStreamPlayer.getFrequencies('voice')
-              : { values: new Float32Array([0]) };
+            let result;
+            if (wavStreamPlayer.analyser) {
+              result = wavStreamPlayer.getFrequencies('voice')
+              if (result.values) {
+              setMorphTargetsFromFrequencies(result.values);
+              }
+            } else {
+              result = { values: new Float32Array([0]) };              
+            }            
             WavRenderer.drawBars(
               serverCanvas,
               serverCtx,
@@ -504,14 +569,14 @@ export function ConsolePage() {
     });
     client.on('conversation.updated', async ({ item, delta }: any) => {
       const items = client.conversation.getItems();
-      console.log('update:', item, delta);
+      // console.log('update:', item, delta);
 
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
       }
       if (delta?.transcript) {
         const viseme = textToVisemes(delta.transcript);
-        animator.addViseme(viseme);
+        // animator.addViseme(viseme);
       }
       if (item.status === 'completed' && item.formatted.audio?.length) {
         const wavFile = await WavRecorder.decode(
@@ -542,17 +607,7 @@ export function ConsolePage() {
           <img src="/openai-logomark.svg" alt="OpenAI logo" />
           <span>realtime console</span>
         </div>
-        <div className="content-api-key">
-          {!LOCAL_RELAY_SERVER_URL && (
-            <Button
-              icon={Edit}
-              iconPosition="end"
-              buttonStyle="flush"
-              label={`api key: ${apiKey.slice(0, 3)}...`}
-              onClick={() => resetAPIKey()}
-            />
-          )}
-        </div>
+        <div>placeholder</div>
         {/* Add the sidebar toggle button here */}
         <Button
           icon={showSidebar ? ChevronLeft : ChevronRight}
