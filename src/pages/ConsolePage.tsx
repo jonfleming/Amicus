@@ -25,8 +25,6 @@ import { Scene } from '../components/Scene';
 import { MorphControls } from '../components/MorphControls';
 
 import './ConsolePage.scss';
-import {textToVisemes} from '../lib/animation/viseme.js';
-import {Animator} from '../lib/animation/animator.js';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 /**
@@ -92,10 +90,7 @@ export function ConsolePage() {
   const wavStreamPlayerRef = useRef<WavStreamPlayer>(
     new WavStreamPlayer({ sampleRate: 24000 })
   );
-  const animatorRef = useRef<Animator>(
-    new Animator( )
-  )
-
+  
   const clientRef = useRef<RealtimeClient>(
     new RealtimeClient(
       LOCAL_RELAY_SERVER_URL
@@ -398,7 +393,6 @@ export function ConsolePage() {
     // Get refs
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
-    const animator = animatorRef.current;
 
     // Set instructions
     client.updateSession({ instructions: instructions });
@@ -510,8 +504,8 @@ export function ConsolePage() {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
       }
       if (delta?.transcript) {
-        const viseme = textToVisemes(delta.transcript);
-        animator.addViseme(viseme);
+        // const viseme = textToVisemes(delta.transcript);
+        // animator.addViseme(viseme);
       }
       if (item.status === 'completed' && item.formatted.audio?.length) {
         const wavFile = await WavRecorder.decode(
