@@ -25,8 +25,9 @@ import { Scene } from '../components/Scene';
 import { MorphControls } from '../components/MorphControls';
 
 import './ConsolePage.scss';
-import {textToVisemes} from '../lib/animation/viseme.js';
-import {Animator} from '../lib/animation/animator.js';
+import { AnimatedFace } from '../lib/animation/animatedFace.js';
+
+import { Animator } from '../lib/animation/animator.js';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 /**
@@ -59,7 +60,6 @@ interface RealtimeEvent {
 export function ConsolePage() {
   // add state for morph targets
   const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
-
   const handleMorphTargetChange = (name: string, value: number) => {
     console.log('handleMorphTargetChange: ', name, value);
     setMorphTargets(prev => ({
@@ -67,9 +67,9 @@ export function ConsolePage() {
       [name]: value
     }));
   };
-  
+
   const clearMorphTargets = () => {
-    setMorphTargets(prev =>{
+    setMorphTargets(prev => {
       const newTarget: Record<string, number> = {};
       Object.keys(prev).forEach(key => {
         newTarget[key] = 0;
@@ -78,75 +78,79 @@ export function ConsolePage() {
     });
   };
 
-  const phonemeRanges = {
-      'EE': [2000, 2300],   // as in "beat"
-      'IH': [1800, 2000],   // as in "bit"
-      'EH': [1600, 1800],   // as in "bet"
-      'AE': [1400, 1600],   // as in "bat"
-      'AA': [1000, 1200],   // as in "bot"
-      'AO': [900, 1000],    // as in "bought"
-      'UH': [800, 900],     // as in "book"
-      'OO': [600, 800],     // as in "boot"
-  };
+  // const phonemeRanges = {
+  //   'EE': [2000, 2300],   // as in "beat"
+  //   'IH': [1800, 2000],   // as in "bit"
+  //   'EH': [1600, 1800],   // as in "bet"
+  //   'AE': [1400, 1600],   // as in "bat"
+  //   'AA': [1000, 1200],   // as in "bot"
+  //   'AO': [900, 1000],    // as in "bought"
+  //   'UH': [800, 900],     // as in "book"
+  //   'OO': [600, 800],     // as in "boot"
+  // };
 
-  // Map phonemes to standard visemes
-  const phonemeToViseme = {
-      'EE': 'viseme_E',
-      'IH': 'viseme_I',
-      'EH': 'viseme_E',
-      'AE': 'viseme_aa',
-      'AA': 'viseme_aa',
-      'AO': 'viseme_aa',
-      'UH': 'visemen_nn',
-      'OO': 'viseme_aa',
-  };
+  // // Map phonemes to standard visemes
+  // const phonemeToViseme = {
+  //   'EE': 'viseme_E',
+  //   'IH': 'viseme_I',
+  //   'EH': 'viseme_E',
+  //   'AE': 'viseme_aa',
+  //   'AA': 'viseme_aa',
+  //   'AO': 'viseme_aa',
+  //   'UH': 'visemen_nn',
+  //   'OO': 'viseme_aa',
+  // };
 
-  const getAverageFrequency = (frequencyData: Float32Array) => {
-    let count = 1;
-    let sum = 0;
-    
-    // Calculate frequency for each bin
-    for (const frequency of frequencyData) {
-      if (frequency === 0) {
-        continue;
-      }
-      sum += frequency;
-      count++;
-    }
-    
-    return 2300 * sum / count;
-  };
+  // const getAverageFrequency = (frequencyData: Float32Array) => {
+  //   let count = 1;
+  //   let sum = 0;
 
-  const getVisemeFromFrequencies = (frequency: number) => {
-    console.log('Average Frequency: ', frequency);
-    for (const [phoneme, range] of Object.entries(phonemeRanges)) {
-        if (frequency >= range[0] && frequency <= range[1]) {
-            return phonemeToViseme[phoneme as keyof typeof phonemeToViseme];
-        }
-    }
-  };
+  //   // Calculate frequency for each bin
+  //   for (const frequency of frequencyData) {
+  //     if (frequency === 0) {
+  //       continue;
+  //     }
+  //     sum += frequency;
+  //     count++;
+  //   }
 
-  const setMorphTargetsFromFrequencies = (frequencies: Float32Array) => {
-    const frequency = getAverageFrequency(frequencies);
-    if (frequency === 0) {
-      return;
-    }
+  //   return 2300 * sum / count;
+  // };
 
-    const viseme = getVisemeFromFrequencies(frequency);
-    // if (lastViseme) {
-    //   handleMorphTargetChange(lastViseme, 0);      
-    // }
+  // const getVisemeFromFrequencies = (frequency: number) => {
+  //   console.log('Average Frequency: ', frequency);
+  //   for (const [phoneme, range] of Object.entries(phonemeRanges)) {
+  //     if (frequency >= range[0] && frequency <= range[1]) {
+  //       return phonemeToViseme[phoneme as keyof typeof phonemeToViseme];
+  //     }
+  //   }
+  // };
 
-    if (viseme) {
-      console.log('Frequencies: ', frequencies);
-      console.log('Setting viseme: ', viseme);
-      handleMorphTargetChange(viseme, 0.5);
-      setTimeout(() => {
-        handleMorphTargetChange(viseme, 0)
-        }, 250);      
-      setLastViseme(viseme);
-    }
-  }
+  // const setMorphTargetsFromFrequencies = (frequencies: Float32Array) => {
+  //   const frequency = getAverageFrequency(frequencies);
+  //   if (frequency === 0) {
+  //     return;
+  //   }
+
+  //   const viseme = getVisemeFromFrequencies(frequency);
+  //   // if (lastViseme) {
+  //   //   handleMorphTargetChange(lastViseme, 0);      
+  //   // }
+
+  //   if (viseme) {
+  //     console.log('Frequencies: ', frequencies);
+  //     console.log('Setting viseme: ', viseme);
+  //     handleMorphTargetChange(viseme, 0.5);
+  //     setTimeout(() => {
+  //       handleMorphTargetChange(viseme, 0)
+  //     }, 250);
+  //     setLastViseme(viseme);
+  //   }
+  // }
+
+  const animatorRef = useRef<Animator>(
+    new Animator(handleMorphTargetChange, clearMorphTargets)
+  );
 
   /**
    * Instantiate:
@@ -160,11 +164,6 @@ export function ConsolePage() {
   const wavStreamPlayerRef = useRef<WavStreamPlayer>(
     new WavStreamPlayer({ sampleRate: 24000 })
   );
-
-  const animatorRef = useRef<Animator>(
-    new Animator(handleMorphTargetChange, clearMorphTargets)
-  );
-
 
   const clientRef = useRef<RealtimeClient>(
     new RealtimeClient(
@@ -212,7 +211,7 @@ export function ConsolePage() {
   const [memoryToolUsed, setMemoryToolUsed] = useState(false);
 
   const [showSidebar, setShowSidebar] = useState(true);
-  
+
   const [lastViseme, setLastViseme] = useState<string>('');
 
   /**
@@ -375,6 +374,26 @@ export function ConsolePage() {
     }
   }, [items]);
 
+  const animatedFace = new AnimatedFace(handleMorphTargetChange);
+
+  useEffect(() => {
+    let isLoaded = true;
+
+    const animate = (currentTime: number) => {
+      if (isLoaded) {
+        const deltaTime = (currentTime - animatedFace.lastUpdateTime) / 1000;
+        animatedFace.update(deltaTime);
+        animatedFace.lastUpdateTime = currentTime;
+        window.requestAnimationFrame(animate);
+      }
+
+      return () => {
+        isLoaded = false;
+      };      
+    };
+    window.requestAnimationFrame(animate);    
+  });
+
   /**
    * Set up render loops for the visualization canvas
    */
@@ -402,10 +421,11 @@ export function ConsolePage() {
             let result;
             if (wavRecorder.recording) {
               result = wavRecorder.getFrequencies('voice')
-              console.log("Frequency: ", result);
+              // console.log("Frequency: ", result);
+
             } else {
-              result = { values: new Float32Array([0]) };              
-            }            
+              result = { values: new Float32Array([0]) };
+            }
             WavRenderer.drawBars(
               clientCanvas,
               clientCtx,
@@ -428,12 +448,13 @@ export function ConsolePage() {
             let result;
             if (wavStreamPlayer.analyser) {
               result = wavStreamPlayer.getFrequencies('voice')
-              if (result.values) {
-              setMorphTargetsFromFrequencies(result.values);
-              }
+              // if (result.values) {
+
+              // setMorphTargetsFromFrequencies(result.values);
+              // }
             } else {
-              result = { values: new Float32Array([0]) };              
-            }            
+              result = { values: new Float32Array([0]) };
+            }
             WavRenderer.drawBars(
               serverCanvas,
               serverCtx,
@@ -573,11 +594,12 @@ export function ConsolePage() {
 
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
+        animatedFace.processAudioChunk(delta.audio);
       }
-      if (delta?.transcript) {
-        const viseme = textToVisemes(delta.transcript);
-        // animator.addViseme(viseme);
-      }
+      // if (delta?.transcript) {
+      //   const viseme = textToVisemes(delta.transcript);
+      //   animator.addViseme(viseme);
+      // }
       if (item.status === 'completed' && item.formatted.audio?.length) {
         const wavFile = await WavRecorder.decode(
           item.formatted.audio,
@@ -618,9 +640,8 @@ export function ConsolePage() {
       </div>
       <div className="content-main">
         <div
-          className={`content-logs ${!showSidebar ? 'expanded' : ''} ${
-            showEventLog ? '' : 'expanded-conversation'
-          }`}
+          className={`content-logs ${!showSidebar ? 'expanded' : ''} ${showEventLog ? '' : 'expanded-conversation'
+            }`}
         >
           {showEventLog && (
             <div className="content-block events">
@@ -664,11 +685,10 @@ export function ConsolePage() {
                           }}
                         >
                           <div
-                            className={`event-source ${
-                              event.type === 'error'
+                            className={`event-source ${event.type === 'error'
                                 ? 'error'
                                 : realtimeEvent.source
-                            }`}
+                              }`}
                           >
                             {realtimeEvent.source === 'client' ? (
                               <ArrowUp />
@@ -739,7 +759,7 @@ export function ConsolePage() {
                               (conversationItem.formatted.audio?.length
                                 ? '(awaiting transcript)'
                                 : conversationItem.formatted.text ||
-                                  '(item sent)')}
+                                '(item sent)')}
                           </div>
                         )}
                       {!conversationItem.formatted.tool &&
@@ -839,14 +859,14 @@ export function ConsolePage() {
             <div className="content-block avatar">
               <div className="content-block-title">Avatar Viewer</div>
               <div className="content-block-body">
-              <Scene morphTargets={morphTargets} />
+                <Scene morphTargets={morphTargets} />
               </div>
             </div>
             <div className="content-block morph-controls">
-              <MorphControls 
+              <MorphControls
                 morphTargets={morphTargets}
                 onMorphTargetChange={handleMorphTargetChange}
-              />              
+              />
             </div>
           </div>
         )}
