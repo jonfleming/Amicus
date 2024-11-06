@@ -23,6 +23,7 @@ import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
 import { Scene } from '../components/Scene';
 import { MorphControls } from '../components/MorphControls';
+import type { AnimationType } from '../components/Avatar';
 
 import './ConsolePage.scss';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
@@ -57,6 +58,7 @@ interface RealtimeEvent {
 export function ConsolePage() {
   // add state for morph targets
   const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
+  const [animation, setAnimation] = useState<AnimationType>('idle');
 
   const handleMorphTargetChange = (name: string, value: number) => {
     if (value != 0 && name != 'viseme_sil') {
@@ -141,7 +143,7 @@ export function ConsolePage() {
   const [memoryToolUsed, setMemoryToolUsed] = useState(false);
 
   const [showSidebar, setShowSidebar] = useState(true);
-
+  
   /**
    * Utility for formatting the timing of logs
    */
@@ -356,9 +358,10 @@ export function ConsolePage() {
             }            
             // Data for voice visualization
             const visemes = WavRenderer.getVisemeData(result.values);
+            const sil = morphTargets['viseme_sil'];
             if (!silent(visemes)) {
               animateLips(visemes);
-              quietRef.current = false;
+              quietRef.current = false;              
             } else if (!quietRef.current) {
               animateLips(visemes);
               quietRef.current = true;
@@ -769,7 +772,7 @@ export function ConsolePage() {
             <div className="content-block avatar">
               <div className="content-block-title">Avatar Viewer</div>
               <div className="content-block-body">
-              <Scene morphTargets={morphTargets} />
+              <Scene morphTargets={morphTargets} animation={animation} />
               </div>
             </div>
             <div className="content-block morph-controls">
@@ -777,6 +780,12 @@ export function ConsolePage() {
                 morphTargets={morphTargets}
                 onMorphTargetChange={handleMorphTargetChange}
               />              
+            </div>
+            <div className="content-block animations">
+              <Button label="Idle" onClick={() => setAnimation('idle')} />
+              <Button label="Walk" onClick={() => setAnimation('walk')} />
+              <Button label="Dance" onClick={() => setAnimation('dance')} />
+              <Button label="Excited" onClick={() => setAnimation('excited')} />
             </div>
           </div>
         )}

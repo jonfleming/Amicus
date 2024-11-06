@@ -1,14 +1,15 @@
 import { OrbitControls, PerspectiveCamera, Environment, ContactShadows } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { Avatar } from './Avatar';
-import { MorphControls } from './MorphControls';
+import type { AnimationType } from './Avatar';
 
 interface SceneProps {
   morphTargets: Record<string, number>;
+  animation: AnimationType;
 }
 
-export function Scene({ morphTargets }: SceneProps) {
+export function Scene({ morphTargets, animation }: SceneProps) {
   return (
     <Canvas shadows>
       <Suspense fallback={null}>
@@ -19,11 +20,9 @@ export function Scene({ morphTargets }: SceneProps) {
           minDistance={2}
           maxDistance={6}
         />
-        
         <Environment preset="city" />
-        
         <group position={[0, -1, 0]}>
-          <Avatar morphTargets={morphTargets} />
+          <Avatar morphTargets={morphTargets} animation={animation} />
           <ContactShadows
             opacity={0.6}
             scale={10}

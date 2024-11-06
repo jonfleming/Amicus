@@ -56,7 +56,7 @@ const normalizeArray = (
  */
 const getVisemeValues = (points: number[]): Record<string, number> => {
   // Ensure we have enough points for analysis
-  if (points.length < 3) {
+  if (points.length < 10) {
     return { viseme_sil: 1 };
   }
 
@@ -79,49 +79,82 @@ const getVisemeValues = (points: number[]): Record<string, number> => {
     viseme_TH: 0
   };
 
-  // Split points into frequency ranges
-  const lowFreq = points.slice(0, Math.floor(points.length * 0.2));  // 0-20% (roughly 0-500Hz)
-  const midFreq = points.slice(Math.floor(points.length * 0.2), Math.floor(points.length * 0.6));  // 20-60% (roughly 500-2000Hz)
-  const highFreq = points.slice(Math.floor(points.length * 0.6));  // 60-100% (roughly 2000Hz+)
+  // Calculate total points per Hz (assuming Nyquist frequency is half sample rate)
+  // For 24000Hz sample rate, we have 22,050 range split across points.length points
+  const pointsPerHz = points.length / 22050;
+
+  // Define frequency ranges
+  const ranges = {
+    veryLow: points.slice(0, Math.floor(500 * pointsPerHz)),  // 0-500Hz (vowels)
+    pbm: points.slice(Math.floor(500 * pointsPerHz), Math.floor(1500 * pointsPerHz)),  // 500-1500Hz (P,B,M)
+    fv: points.slice(Math.floor(1500 * pointsPerHz), Math.floor(2500 * pointsPerHz)),  // 1500-2500Hz (F,V)
+    w: points.slice(Math.floor(2000 * pointsPerHz), Math.floor(3000 * pointsPerHz)),   // 2000-3000Hz (W)
+    r: points.slice(Math.floor(2500 * pointsPerHz), Math.floor(2500 * pointsPerHz)),   // 2500Hz (R)
+    sz: points.slice(Math.floor(3500 * pointsPerHz), Math.floor(4500 * pointsPerHz)),  // 3500-4500Hz (S,Z)
+    veryHigh: points.slice(Math.floor(4500 * pointsPerHz))  // 4500Hz+ (other fricatives)
+  };
 
   // Calculate average amplitudes for each range
-  const lowAmp = lowFreq.reduce((sum, val) => sum + val, 0) / lowFreq.length;
-  const midAmp = midFreq.reduce((sum, val) => sum + val, 0) / midFreq.length;
-  const highAmp = highFreq.reduce((sum, val) => sum + val, 0) / highFreq.length;
+  const amplitudes = Object.fromEntries(
+    Object.entries(ranges).map(([key, range]) => [
+      key,
+      range.length > 0 ? range.reduce((sum, val) => sum + val, 0) / range.length : 0
+    ])
+  );
 
   // Normalize amplitudes to 0-1 range
-  const maxAmp = Math.max(lowAmp, midAmp, highAmp);
-  const normalizedLow = maxAmp > 0 ? lowAmp / maxAmp : 0;
-  const normalizedMid = maxAmp > 0 ? midAmp / maxAmp : 0;
-  const normalizedHigh = maxAmp > 0 ? highAmp / maxAmp : 0;
+  const maxAmp = Math.max(...Object.values(amplitudes));
+  const normalized = Object.fromEntries(
+    Object.entries(amplitudes).map(([key, amp]) => [
+      key,
+      maxAmp > 0 ? amp / maxAmp : 0
+    ])
+  );
 
   // Map frequency ranges to visemes
   if (maxAmp < 0.1) {
     // If overall amplitude is very low, use silent viseme
     visemes.viseme_sil = 1;
   } else {
-    // Vowels (low frequency)
-    if (normalizedLow > 0.3) {
-      visemes.viseme_aa = normalizedLow * 0.3;
-      visemes.viseme_U = normalizedLow * 0.2;
+    // Vowels (very low frequency)
+    if (normalized.veryLow > 0.3) {
+      visemes.viseme_aa = normalized.veryLow * 0.3;
+      visemes.viseme_O = normalized.veryLow * 0.2;
+      visemes.viseme_U = normalized.veryLow * 0.2;
     }
 
-    // Consonants (mid frequency)
-    if (normalizedMid > 0.3) {
-      visemes.viseme_DD = normalizedMid * 0.3;
-      visemes.viseme_nn = normalizedMid * 0.2;
-      visemes.viseme_aa = Math.max(0, visemes.viseme_aa - 0.1);
-      visemes.viseme_U = Math.max(0, visemes.viseme_O - 0.1);
+    // P, B, M sounds (500-1500Hz)
+    if (normalized.pbm > 0.3) {
+      visemes.viseme_PP = normalized.pbm * 0.4;
+      visemes.viseme_aa = 0;
+      visemes.viseme_O = 0;
+      visemes.viseme_U = 0;
     }
 
-    // Fricatives (high frequency)
-    if (normalizedHigh > 0.3) {
-      visemes.viseme_SS = normalizedHigh * 0.3;
-      visemes.viseme_FF = normalizedHigh * 0.2;
-      visemes.viseme_aa = Math.max(0, visemes.viseme_aa - 0.1);
-      visemes.viseme_U = Math.max(0, visemes.viseme_O - 0.1);
-      visemes.viseme_DD = Math.max(0, visemes.viseme_DD - 0.1);
-      visemes.viseme_nn = Math.max(0, visemes.viseme_nn - 0.1);
+    // F, V sounds (1500-2500Hz)
+    if (normalized.fv > 0.3) {
+      visemes.viseme_FF = normalized.fv * 0.4;
+    }
+
+    // W sound (2000-3000Hz)
+    if (normalized.w > 0.3) {
+      visemes.viseme_U = Math.max(visemes.viseme_U, normalized.w * 0.3);
+    }
+
+    // R sound (2500Hz)
+    if (normalized.r > 0.3) {
+      visemes.viseme_RR = normalized.r * 0.4;
+    }
+
+    // S, Z sounds (3500-4500Hz)
+    if (normalized.sz > 0.3) {
+      visemes.viseme_SS = normalized.sz * 0.4;
+    }
+
+    // Other high frequency sounds
+    if (normalized.veryHigh > 0.3) {
+      visemes.viseme_TH = normalized.veryHigh * 0.3;
+      visemes.viseme_CH = normalized.veryHigh * 0.2;
     }
   }
 

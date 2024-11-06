@@ -1,35 +1,66 @@
-import { useGLTF } from '@react-three/drei';
+import { useGLTF, useAnimations } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
 import { Group, SkinnedMesh } from 'three';
+import { GLTF } from 'three-stdlib'
+import * as THREE from 'three';
 
 interface MorphTargets {
   [key: string]: number;
 }
 
-interface AvatarProps {
-  morphTargets: MorphTargets;
+type GLTFResult = GLTF & {
+  nodes: { [key: string]: THREE.Mesh }
+  materials: { [key: string]: THREE.Material }
 }
 
-// Pre-load the model to avoid loading issues
-useGLTF.preload(
-  'https://models.readyplayer.me/669bfa4c553871e7ca76cfca.glb?morphTargets=Oculus+Visemes'
-);
+export type AnimationType = 'idle' | 'walk' | 'dance' | 'excited';
 
-export function Avatar({ morphTargets }: AvatarProps) {
+interface AvatarProps {
+  readonly morphTargets: MorphTargets;
+  readonly animation: AnimationType;
+}
+
+export function Avatar({ morphTargets, animation }: AvatarProps) {
   const group = useRef<Group>(null);
-  const { nodes, materials } = useGLTF(
-    'https://models.readyplayer.me/669bfa4c553871e7ca76cfca.glb?morphTargets=Oculus+Visemes'
-  );
+  const { nodes, materials, animations } = useGLTF("/output_model_4.glb") as GLTFResult;
+  const { actions, names } = useAnimations(animations, group)
+  const previousAction = useRef<THREE.AnimationAction | null>(null)
+  const animationMap = {
+    idle: 'Animation_Idle',
+    walk: 'Animation_Catwalk',
+    dance: 'Animation_Rumba',
+    excited: 'Animation_Excited',
+  } as Record<AnimationType, string>;
 
-  // Update morph target influences when they change
+  console.log('Avatar Animation:', animation);
+
+  useEffect(() => {
+    console.log('Available Animations:', names);
+    const action = actions[animationMap[animation]];
+
+    if (action) {
+      if (previousAction.current) {
+        console.log('fading animation:', animationMap[animation]);
+        previousAction.current.fadeOut(0.5);
+      }
+      console.log('Playing animation:', animationMap[animation]);
+      action.reset().fadeIn(0.5).play();
+
+      previousAction.current = action
+    }
+
+    return () => {
+      if (previousAction.current) {
+        console.log('Stopping animation:', animationMap[animation]);
+        previousAction.current.fadeOut(0.5).stop();
+      }
+    };
+  }, [animation])
+  
   useEffect(() => {
     const head = group.current?.getObjectByName('Wolf3D_Head') as SkinnedMesh;
     const teeth = group.current?.getObjectByName('Wolf3D_Teeth') as SkinnedMesh;
-    
-    // console.log('UseEffect: ', { head, teeth });
-    // console.log('morphTargets: ', morphTargets);
 
-    // Update head morph targets
     if (head) {
       const headDict = head.morphTargetDictionary;
       const headInfluences = head.morphTargetInfluences;
@@ -43,7 +74,6 @@ export function Avatar({ morphTargets }: AvatarProps) {
       }
     }
 
-    // Update teeth morph targets
     if (teeth) {
       const teethDict = teeth.morphTargetDictionary;
       const teethInfluences = teeth.morphTargetInfluences;
@@ -59,12 +89,7 @@ export function Avatar({ morphTargets }: AvatarProps) {
   }, [morphTargets]);
 
   return (
-    <group
-      ref={group}
-      dispose={null}
-      rotation={[-0.6, 0, 0]}
-      position={[0, 0.8, 3.1]}
-    >
+    <group ref={group} dispose={null} rotation={[-0.6, 0, 0]} position={[0, 0.8, 3.1]}>
       <primitive object={nodes.Hips} />
       <skinnedMesh
         geometry={(nodes.Wolf3D_Body as SkinnedMesh).geometry}
