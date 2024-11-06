@@ -26,8 +26,8 @@ export function Avatar({ morphTargets }: AvatarProps) {
     const head = group.current?.getObjectByName('Wolf3D_Head') as SkinnedMesh;
     const teeth = group.current?.getObjectByName('Wolf3D_Teeth') as SkinnedMesh;
     
-    console.log('UseEffect: ', { head, teeth });
-    console.log('morphTargets: ', morphTargets);
+    // console.log('UseEffect: ', { head, teeth });
+    // console.log('morphTargets: ', morphTargets);
 
     // Update head morph targets
     if (head) {

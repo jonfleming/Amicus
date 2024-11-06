@@ -59,11 +59,26 @@ export function ConsolePage() {
   const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
 
   const handleMorphTargetChange = (name: string, value: number) => {
-    console.log('handleMorphTargetChange: ', name, value);
+    if (value != 0 && name != 'viseme_sil') {
+      console.log('handleMorphTargetChange: ', name, value);
+    }
     setMorphTargets(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const animateLips = (visemes: Record<string, number>) => {
+    // console.log('animateLips: ', visemes);
+    Object.keys(visemes).forEach((viseme) => {
+      const name = viseme;
+      const value = visemes[viseme];
+      handleMorphTargetChange(name, value);
+    });
+  };
+
+  const silent = (visemes: Record<string, number>) => {
+    return visemes?.['viseme_sil'] == 1;
   };
 
   /**
@@ -96,6 +111,7 @@ export function ConsolePage() {
   const eventsScrollHeightRef = useRef(0);
   const eventsScrollRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<string>(new Date().toISOString());
+  const quietRef = useRef<boolean>(true);
 
   /**
    * All of our variables for displaying application state
@@ -125,7 +141,7 @@ export function ConsolePage() {
   const [memoryToolUsed, setMemoryToolUsed] = useState(false);
 
   const [showSidebar, setShowSidebar] = useState(true);
-  
+
   /**
    * Utility for formatting the timing of logs
    */
@@ -333,12 +349,20 @@ export function ConsolePage() {
           if (serverCtx) {
             serverCtx.clearRect(0, 0, serverCanvas.width, serverCanvas.height);
             let result;
-            // Data for voice visualization
             if (wavStreamPlayer.analyser) {
               result = wavStreamPlayer.getFrequencies('voice')
             } else {
               result = { values: new Float32Array([0]) };              
             }            
+            // Data for voice visualization
+            const visemes = WavRenderer.getVisemeData(result.values);
+            if (!silent(visemes)) {
+              animateLips(visemes);
+              quietRef.current = false;
+            } else if (!quietRef.current) {
+              animateLips(visemes);
+              quietRef.current = true;
+            }
             WavRenderer.drawBars(
               serverCanvas,
               serverCtx,

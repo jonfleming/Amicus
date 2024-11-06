@@ -8,20 +8,9 @@ const dataMap = new WeakMap();
 const normalizeArray = (
   data: Float32Array,
   m: number,
-  downsamplePeaks: boolean = false,
-  memoize: boolean = false
+  downsamplePeaks: boolean = false
 ) => {
   let cache, mKey, dKey;
-  if (memoize) {
-    mKey = m.toString();
-    dKey = downsamplePeaks.toString();
-    cache = dataMap.has(data) ? dataMap.get(data) : {};
-    dataMap.set(data, cache);
-    cache[mKey] = cache[mKey] || {};
-    if (cache[mKey][dKey]) {
-      return cache[mKey][dKey];
-    }
-  }
   const n = data.length;
   const result = new Array(m);
   if (m <= n) {
@@ -56,10 +45,87 @@ const normalizeArray = (
       }
     }
   }
-  if (memoize) {
-    cache[mKey as string][dKey as string] = result;
-  }
+
   return result;
+};
+
+/**
+ * Converts frequency amplitudes to viseme values for lip sync animation
+ * @param points Array of frequency amplitudes
+ * @returns Object containing viseme values
+ */
+const getVisemeValues = (points: number[]): Record<string, number> => {
+  // Ensure we have enough points for analysis
+  if (points.length < 3) {
+    return { viseme_sil: 1 };
+  }
+
+  // Initialize all visemes to 0
+  const visemes: Record<string, number> = {
+    viseme_aa: 0,
+    viseme_E: 0,
+    viseme_I: 0,
+    viseme_O: 0,
+    viseme_U: 0,
+    viseme_CH: 0,
+    viseme_DD: 0,
+    viseme_FF: 0,
+    viseme_kk: 0,
+    viseme_nn: 0,
+    viseme_PP: 0,
+    viseme_RR: 0,
+    viseme_sil: 0,
+    viseme_SS: 0,
+    viseme_TH: 0
+  };
+
+  // Split points into frequency ranges
+  const lowFreq = points.slice(0, Math.floor(points.length * 0.2));  // 0-20% (roughly 0-500Hz)
+  const midFreq = points.slice(Math.floor(points.length * 0.2), Math.floor(points.length * 0.6));  // 20-60% (roughly 500-2000Hz)
+  const highFreq = points.slice(Math.floor(points.length * 0.6));  // 60-100% (roughly 2000Hz+)
+
+  // Calculate average amplitudes for each range
+  const lowAmp = lowFreq.reduce((sum, val) => sum + val, 0) / lowFreq.length;
+  const midAmp = midFreq.reduce((sum, val) => sum + val, 0) / midFreq.length;
+  const highAmp = highFreq.reduce((sum, val) => sum + val, 0) / highFreq.length;
+
+  // Normalize amplitudes to 0-1 range
+  const maxAmp = Math.max(lowAmp, midAmp, highAmp);
+  const normalizedLow = maxAmp > 0 ? lowAmp / maxAmp : 0;
+  const normalizedMid = maxAmp > 0 ? midAmp / maxAmp : 0;
+  const normalizedHigh = maxAmp > 0 ? highAmp / maxAmp : 0;
+
+  // Map frequency ranges to visemes
+  if (maxAmp < 0.1) {
+    // If overall amplitude is very low, use silent viseme
+    visemes.viseme_sil = 1;
+  } else {
+    // Vowels (low frequency)
+    if (normalizedLow > 0.3) {
+      visemes.viseme_aa = normalizedLow * 0.3;
+      visemes.viseme_U = normalizedLow * 0.2;
+    }
+
+    // Consonants (mid frequency)
+    if (normalizedMid > 0.3) {
+      visemes.viseme_DD = normalizedMid * 0.3;
+      visemes.viseme_nn = normalizedMid * 0.2;
+      visemes.viseme_aa = Math.max(0, visemes.viseme_aa - 0.1);
+      visemes.viseme_U = Math.max(0, visemes.viseme_O - 0.1);
+    }
+
+    // Fricatives (high frequency)
+    if (normalizedHigh > 0.3) {
+      visemes.viseme_SS = normalizedHigh * 0.3;
+      visemes.viseme_FF = normalizedHigh * 0.2;
+      visemes.viseme_aa = Math.max(0, visemes.viseme_aa - 0.1);
+      visemes.viseme_U = Math.max(0, visemes.viseme_O - 0.1);
+      visemes.viseme_DD = Math.max(0, visemes.viseme_DD - 0.1);
+      visemes.viseme_nn = Math.max(0, visemes.viseme_nn - 0.1);
+    }
+  }
+
+  return visemes;
 };
 
 export const WavRenderer = {
@@ -107,5 +173,17 @@ export const WavRenderer = {
       ctx.fillStyle = color;
       ctx.fillRect(x, y, barWidth, height);
     }
+    return points;
   },
+
+  /**
+   * Converts frequency data to viseme values for lip sync animation
+   * @param data Float32Array of frequency data
+   * @param pointCount number of frequency points to analyze
+   * @returns Object containing viseme values
+   */
+  getVisemeData: (data: Float32Array, pointCount: number = 15) => {
+    const points = normalizeArray(data, pointCount, true);
+    return getVisemeValues(points);
+  }
 };
