@@ -25,8 +25,6 @@ import { Scene } from '../components/Scene';
 import { MorphControls } from '../components/MorphControls';
 
 import './ConsolePage.scss';
-import {textToVisemes} from '../lib/animation/viseme.js';
-import {Animator} from '../lib/animation/animator.js';
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
 
 /**
@@ -160,12 +158,7 @@ export function ConsolePage() {
   const wavStreamPlayerRef = useRef<WavStreamPlayer>(
     new WavStreamPlayer({ sampleRate: 24000 })
   );
-
-  const animatorRef = useRef<Animator>(
-    new Animator(handleMorphTargetChange, clearMorphTargets)
-  );
-
-
+  
   const clientRef = useRef<RealtimeClient>(
     new RealtimeClient(
       { url: LOCAL_RELAY_SERVER_URL }
@@ -399,13 +392,9 @@ export function ConsolePage() {
           clientCtx = clientCtx || clientCanvas.getContext('2d');
           if (clientCtx) {
             clientCtx.clearRect(0, 0, clientCanvas.width, clientCanvas.height);
-            let result;
-            if (wavRecorder.recording) {
-              result = wavRecorder.getFrequencies('voice')
-              console.log("Frequency: ", result);
-            } else {
-              result = { values: new Float32Array([0]) };              
-            }            
+            const result = wavRecorder.recording
+              ? wavRecorder.getFrequencies('voice')
+              : { values: new Float32Array([0]) };
             WavRenderer.drawBars(
               clientCanvas,
               clientCtx,
@@ -463,7 +452,6 @@ export function ConsolePage() {
     // Get refs
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
-    const animator = animatorRef.current;
 
     // Set instructions
     client.updateSession({ instructions: instructions });
@@ -575,7 +563,7 @@ export function ConsolePage() {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
       }
       if (delta?.transcript) {
-        const viseme = textToVisemes(delta.transcript);
+        // const viseme = textToVisemes(delta.transcript);
         // animator.addViseme(viseme);
       }
       if (item.status === 'completed' && item.formatted.audio?.length) {
