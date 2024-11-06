@@ -17,7 +17,7 @@ import { WavRecorder, WavStreamPlayer } from '../lib/wavtools/index.js';
 import { instructions } from '../utils/conversation_config.js';
 import { WavRenderer } from '../utils/wav_renderer';
 
-import { X, Edit, Zap, ArrowUp, ArrowDown, Eye, EyeOff, ChevronRight, ChevronLeft } from 'react-feather';
+import { X, Zap, ArrowUp, ArrowDown, Eye, EyeOff, ChevronRight, ChevronLeft } from 'react-feather';
 import { Button } from '../components/button/Button';
 import { Toggle } from '../components/toggle/Toggle';
 import { Map } from '../components/Map';
@@ -65,86 +65,6 @@ export function ConsolePage() {
       [name]: value
     }));
   };
-  
-  const clearMorphTargets = () => {
-    setMorphTargets(prev =>{
-      const newTarget: Record<string, number> = {};
-      Object.keys(prev).forEach(key => {
-        newTarget[key] = 0;
-      });
-      return newTarget;
-    });
-  };
-
-  const phonemeRanges = {
-      'EE': [2000, 2300],   // as in "beat"
-      'IH': [1800, 2000],   // as in "bit"
-      'EH': [1600, 1800],   // as in "bet"
-      'AE': [1400, 1600],   // as in "bat"
-      'AA': [1000, 1200],   // as in "bot"
-      'AO': [900, 1000],    // as in "bought"
-      'UH': [800, 900],     // as in "book"
-      'OO': [600, 800],     // as in "boot"
-  };
-
-  // Map phonemes to standard visemes
-  const phonemeToViseme = {
-      'EE': 'viseme_E',
-      'IH': 'viseme_I',
-      'EH': 'viseme_E',
-      'AE': 'viseme_aa',
-      'AA': 'viseme_aa',
-      'AO': 'viseme_aa',
-      'UH': 'visemen_nn',
-      'OO': 'viseme_aa',
-  };
-
-  const getAverageFrequency = (frequencyData: Float32Array) => {
-    let count = 1;
-    let sum = 0;
-    
-    // Calculate frequency for each bin
-    for (const frequency of frequencyData) {
-      if (frequency === 0) {
-        continue;
-      }
-      sum += frequency;
-      count++;
-    }
-    
-    return 2300 * sum / count;
-  };
-
-  const getVisemeFromFrequencies = (frequency: number) => {
-    console.log('Average Frequency: ', frequency);
-    for (const [phoneme, range] of Object.entries(phonemeRanges)) {
-        if (frequency >= range[0] && frequency <= range[1]) {
-            return phonemeToViseme[phoneme as keyof typeof phonemeToViseme];
-        }
-    }
-  };
-
-  const setMorphTargetsFromFrequencies = (frequencies: Float32Array) => {
-    const frequency = getAverageFrequency(frequencies);
-    if (frequency === 0) {
-      return;
-    }
-
-    const viseme = getVisemeFromFrequencies(frequency);
-    // if (lastViseme) {
-    //   handleMorphTargetChange(lastViseme, 0);      
-    // }
-
-    if (viseme) {
-      console.log('Frequencies: ', frequencies);
-      console.log('Setting viseme: ', viseme);
-      handleMorphTargetChange(viseme, 0.5);
-      setTimeout(() => {
-        handleMorphTargetChange(viseme, 0)
-        }, 250);      
-      setLastViseme(viseme);
-    }
-  }
 
   /**
    * Instantiate:
@@ -206,8 +126,6 @@ export function ConsolePage() {
 
   const [showSidebar, setShowSidebar] = useState(true);
   
-  const [lastViseme, setLastViseme] = useState<string>('');
-
   /**
    * Utility for formatting the timing of logs
    */
@@ -415,11 +333,9 @@ export function ConsolePage() {
           if (serverCtx) {
             serverCtx.clearRect(0, 0, serverCanvas.width, serverCanvas.height);
             let result;
+            // Data for voice visualization
             if (wavStreamPlayer.analyser) {
               result = wavStreamPlayer.getFrequencies('voice')
-              if (result.values) {
-              setMorphTargetsFromFrequencies(result.values);
-              }
             } else {
               result = { values: new Float32Array([0]) };              
             }            
@@ -693,10 +609,10 @@ export function ConsolePage() {
               {items.map((conversationItem, i) => {
                 return (
                   <div className="conversation-item" key={conversationItem.id}>
-                    <div className={`speaker ${conversationItem.role || ''}`}>
+                    <div className={`speaker ${conversationItem.role ?? ''}`}>
                       <div>
                         {(
-                          conversationItem.role || conversationItem.type
+                          conversationItem.role ?? conversationItem.type
                         ).replaceAll('_', ' ')}
                       </div>
                       <div
@@ -723,18 +639,18 @@ export function ConsolePage() {
                       {!conversationItem.formatted.tool &&
                         conversationItem.role === 'user' && (
                           <div>
-                            {conversationItem.formatted.transcript ||
+                            {conversationItem.formatted.transcript ??
                               (conversationItem.formatted.audio?.length
                                 ? '(awaiting transcript)'
-                                : conversationItem.formatted.text ||
+                                : conversationItem.formatted.text ??
                                   '(item sent)')}
                           </div>
                         )}
                       {!conversationItem.formatted.tool &&
                         conversationItem.role === 'assistant' && (
                           <div>
-                            {conversationItem.formatted.transcript ||
-                              conversationItem.formatted.text ||
+                            {conversationItem.formatted.transcript ?? 
+                              conversationItem.formatted.text ?? 
                               '(truncated)'}
                           </div>
                         )}
@@ -742,7 +658,9 @@ export function ConsolePage() {
                         <audio
                           src={conversationItem.formatted.file.url}
                           controls
-                        />
+                        >
+                          <track kind="captions" />
+                        </audio>
                       )}
                     </div>
                   </div>
@@ -792,7 +710,7 @@ export function ConsolePage() {
               <div className="content-block map">
                 <div className="content-block-title">get_weather()</div>
                 <div className="content-block-title bottom">
-                  {marker?.location || 'not yet retrieved'}
+                  {marker?.location ?? 'not yet retrieved'}
                   {!!marker?.temperature && (
                     <>
                       <br />

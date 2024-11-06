@@ -24,17 +24,37 @@ export function Avatar({ morphTargets }: AvatarProps) {
   // Update morph target influences when they change
   useEffect(() => {
     const head = group.current?.getObjectByName('Wolf3D_Head') as SkinnedMesh;
-    console.log('UseEffect: ', head);
-    if (head?.morphTargetDictionary && head?.morphTargetInfluences) {
-      console.log('morphTargets: ', morphTargets);
-      Object.entries(morphTargets).forEach(([name, value]) => {
-        const index = head.morphTargetDictionary ? head.morphTargetDictionary[name] : undefined;
-        if (typeof index !== 'undefined') {
-          if (head.morphTargetInfluences) {
-            head.morphTargetInfluences[index] = value;
+    const teeth = group.current?.getObjectByName('Wolf3D_Teeth') as SkinnedMesh;
+    
+    console.log('UseEffect: ', { head, teeth });
+    console.log('morphTargets: ', morphTargets);
+
+    // Update head morph targets
+    if (head) {
+      const headDict = head.morphTargetDictionary;
+      const headInfluences = head.morphTargetInfluences;
+      if (headDict && headInfluences) {
+        Object.entries(morphTargets).forEach(([name, value]) => {
+          const index = headDict[name];
+          if (typeof index !== 'undefined') {
+            headInfluences[index] = value;
           }
-        }
-      });
+        });
+      }
+    }
+
+    // Update teeth morph targets
+    if (teeth) {
+      const teethDict = teeth.morphTargetDictionary;
+      const teethInfluences = teeth.morphTargetInfluences;
+      if (teethDict && teethInfluences) {
+        Object.entries(morphTargets).forEach(([name, value]) => {
+          const index = teethDict[name];
+          if (typeof index !== 'undefined') {
+            teethInfluences[index] = value;
+          }
+        });
+      }
     }
   }, [morphTargets]);
 
