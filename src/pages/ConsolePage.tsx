@@ -58,7 +58,7 @@ interface RealtimeEvent {
 export function ConsolePage() {
   // add state for morph targets
   const [morphTargets, setMorphTargets] = useState<Record<string, number>>({});
-  const [animation, setAnimation] = useState<AnimationType>('idle');
+  const [animation, setAnimation] = useState<AnimationType>('none');
 
   const handleMorphTargetChange = (name: string, value: number) => {
     if (value != 0 && name != 'viseme_sil') {

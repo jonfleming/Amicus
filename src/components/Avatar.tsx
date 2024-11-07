@@ -1,7 +1,9 @@
-import { useGLTF, useAnimations } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
 import { Group, SkinnedMesh } from 'three';
 import { GLTF } from 'three-stdlib'
+import { useLoader } from '@react-three/fiber';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import * as THREE from 'three';
 
 interface MorphTargets {
@@ -13,51 +15,99 @@ type GLTFResult = GLTF & {
   materials: { [key: string]: THREE.Material }
 }
 
-export type AnimationType = 'idle' | 'walk' | 'dance' | 'excited';
+export type AnimationType = 'idle' | 'walk' | 'dance' | 'excited' | 'none';
 
 interface AvatarProps {
   readonly morphTargets: MorphTargets;
   readonly animation: AnimationType;
+  onAnimationStart: () => void;
+  setCameraPosition: (position: any) => void;
 }
 
-export function Avatar({ morphTargets, animation }: AvatarProps) {
+const animationStartPosition = {
+  "target": {
+      "x": 0.17697423079506147,
+      "y": 2.474099976437292,
+      "z": 2.4244568176728443
+  },
+  "position": {
+      "x": -0.07143141521359608,
+      "y": 0.30771805857413037,
+      "z": 4.973002289306958
+  },
+  "zoom": 1
+}
+
+export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPosition }: Readonly<AvatarProps>) {
   const group = useRef<Group>(null);
-  const { nodes, materials, animations } = useGLTF("/output_model_4.glb") as GLTFResult;
-  const { actions, names } = useAnimations(animations, group)
+  const { nodes, materials } = useGLTF("/office-lady.glb") as GLTFResult;
+  const animations = {
+    idle: useLoader(FBXLoader, "/Idle.fbx"),
+    walk: useLoader(FBXLoader, "/Catwalk.fbx"),
+    dance: useLoader(FBXLoader, "/Rumba.fbx"),
+    excited: useLoader(FBXLoader, "/Excited.fbx"),
+    none: null,
+  }
+  
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
   const previousAction = useRef<THREE.AnimationAction | null>(null)
-  const animationMap = {
-    idle: 'Animation_Idle',
-    walk: 'Animation_Catwalk',
-    dance: 'Animation_Rumba',
-    excited: 'Animation_Excited',
-  } as Record<AnimationType, string>;
+  const lastAnimation = useRef<AnimationType | null>(null)
 
   console.log('Avatar Animation:', animation);
 
+  // Initialize mixer
   useEffect(() => {
-    console.log('Available Animations:', names);
-    const action = actions[animationMap[animation]];
+    if (group.current) {
+      mixerRef.current = new THREE.AnimationMixer(group.current);
+    }
+  }, []);
 
-    if (action) {
+  // Handle animations
+  useEffect(() => {
+    if (!mixerRef.current) return;
+    if (animation == 'none') return;
+
+    const clip = animations[animation].animations[0];
+    console.log('clip:', clip);
+
+    if (clip && lastAnimation.current !== animation) {      
+      
       if (previousAction.current) {
-        console.log('fading animation:', animationMap[animation]);
+        console.log('fading animation:', animation);
         previousAction.current.fadeOut(0.5);
       }
-      console.log('Playing animation:', animationMap[animation]);
+      
+      console.log('Setting Camera and Playing animation:', animation);
+      // onAnimationStart();
+      setCameraPosition(animationStartPosition);
+      const action = mixerRef.current.clipAction(clip);
       action.reset().fadeIn(0.5).play();
-
-      previousAction.current = action
+            
+      previousAction.current = action;
+      lastAnimation.current = animation;
     }
 
     return () => {
       if (previousAction.current) {
-        console.log('Stopping animation:', animationMap[animation]);
+        console.log('Stopping animation:', animation);
         previousAction.current.fadeOut(0.5).stop();
       }
     };
-  }, [animation])
-  
+  }, [animation]);
+
+  // Animation update loop
   useEffect(() => {
+    let frameId: number;
+    const animate = () => {
+      frameId = requestAnimationFrame(animate);
+      mixerRef.current?.update(0.016); // Update at ~60fps
+    };
+    animate();
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
+  // Function to update morph targets
+  const updateMorphTargets = () => {
     const head = group.current?.getObjectByName('Wolf3D_Head') as SkinnedMesh;
     const teeth = group.current?.getObjectByName('Wolf3D_Teeth') as SkinnedMesh;
 
@@ -86,6 +136,11 @@ export function Avatar({ morphTargets, animation }: AvatarProps) {
         });
       }
     }
+  };
+
+  // Handle morph targets
+  useEffect(() => {
+    updateMorphTargets();
   }, [morphTargets]);
 
   return (
