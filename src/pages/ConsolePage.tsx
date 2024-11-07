@@ -786,6 +786,8 @@ export function ConsolePage() {
               <Button label="Walk" onClick={() => setAnimation('walk')} />
               <Button label="Dance" onClick={() => setAnimation('dance')} />
               <Button label="Excited" onClick={() => setAnimation('excited')} />
+              <Button label="Standing" onClick={() => setAnimation('standing')} />
+              <Button label="None" onClick={() => setAnimation('none')} />
             </div>
           </div>
         )}

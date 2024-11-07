@@ -15,7 +15,7 @@ type GLTFResult = GLTF & {
   materials: { [key: string]: THREE.Material }
 }
 
-export type AnimationType = 'idle' | 'walk' | 'dance' | 'excited' | 'none';
+export type AnimationType = 'idle' | 'walk' | 'dance' | 'excited' | 'standing' | 'none';
 
 interface AvatarProps {
   readonly morphTargets: MorphTargets;
@@ -38,6 +38,26 @@ const animationStartPosition = {
   "zoom": 1
 }
 
+const initialState = {
+  "target": {
+      "x": 0,
+      "y": 0.028495354854373618,
+      "z": -0.01424767742718681
+  },
+  "position": {
+      "x": 0,
+      "y": 1.528495354854374,
+      "z": 2.985752322572813
+  },
+  "zoom": 1
+}
+
+// morphtargets are the visemes
+// animation is the animation type
+// onAnimationStart is a function that gets called when the animation starts
+// setCameraPosition is a function that sets the camera position
+// clip is the animation clip
+// action is the animation action
 export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPosition }: Readonly<AvatarProps>) {
   const group = useRef<Group>(null);
   const { nodes, materials } = useGLTF("/office-lady.glb") as GLTFResult;
@@ -46,6 +66,7 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
     walk: useLoader(FBXLoader, "/Catwalk.fbx"),
     dance: useLoader(FBXLoader, "/Rumba.fbx"),
     excited: useLoader(FBXLoader, "/Excited.fbx"),
+    standing: useLoader(FBXLoader, "/Standing.fbx"),
     none: null,
   }
   
@@ -65,7 +86,10 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
   // Handle animations
   useEffect(() => {
     if (!mixerRef.current) return;
-    if (animation == 'none') return;
+    if (animation == 'none') {
+      setCameraPosition(initialState);
+      return;
+    }
 
     const clip = animations[animation].animations[0];
     console.log('clip:', clip);
@@ -81,6 +105,15 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
       // onAnimationStart();
       setCameraPosition(animationStartPosition);
       const action = mixerRef.current.clipAction(clip);
+      
+      // Set animation to play only once
+      action.setLoop(THREE.LoopOnce, 1);
+      action.time = 0;
+      action.timeScale = 1;
+      action.startAt(0);
+      action.setDuration(5); // clip.duration
+      action.clampWhenFinished = true;
+      
       action.reset().fadeIn(0.5).play();
             
       previousAction.current = action;

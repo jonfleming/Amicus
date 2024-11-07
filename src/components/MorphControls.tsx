@@ -1,5 +1,5 @@
-import React from 'react';
-import { Sliders } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sliders, ChevronUp, ChevronDown } from 'lucide-react';
 
 const VISEMES = [
   { name: 'viseme_aa', label: 'AA (car)' },
@@ -25,33 +25,44 @@ interface MorphControlsProps {
 }
 
 export function MorphControls({ morphTargets, onMorphTargetChange }: MorphControlsProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
-    <div className="absolute right-8 top-8 w-72 bg-white/10 backdrop-blur-lg rounded-lg p-4 text-white">
-      <div className="flex items-center gap-2 mb-4">
+    <div className={`absolute right-8 top-8 w-72 bg-white/10 backdrop-blur-lg rounded-lg p-4 text-white transition-all duration-300 ${isExpanded ? 'h-[500px]' : 'h-auto'}`}>
+      <div className="flex justify-between gap-6 mb-8">
         <Sliders size={20} />
-        <h2 className="text-lg font-semibold">Viseme Controls</h2>
+        <span className="text-4xl font-sans font-semibold" >&nbsp; Viseme Controls &nbsp;</span>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          aria-label={isExpanded ? "Collapse controls" : "Expand controls"}
+        >
+          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </button>
       </div>
       
-      <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-        {VISEMES.map(({ name, label }) => (
-          <div key={name} className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <label htmlFor={name}>{label}</label>
-              <span className="text-white/60">{(morphTargets[name] || 0).toFixed(2)}</span>
+      {isExpanded && (
+        <div className="space-y-3 h-[calc(100%-4rem)] overflow-y-auto pr-2 custom-scrollbar">
+          {VISEMES.map(({ name, label }) => (
+            <div key={name} className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <label htmlFor={name}>{label}</label>
+                <span className="text-white/60">{(morphTargets[name] || 0).toFixed(2)}</span>
+              </div>
+              <input
+                type="range"
+                id={name}
+                min="0"
+                max="1"
+                step="0.01"
+                value={morphTargets[name] || 0}
+                onChange={(e) => onMorphTargetChange(name, parseFloat(e.target.value))}
+                className="w-full accent-blue-500 bg-white/20 rounded-lg appearance-none h-2 cursor-pointer"
+              />
             </div>
-            <input
-              type="range"
-              id={name}
-              min="0"
-              max="1"
-              step="0.01"
-              value={morphTargets[name] || 0}
-              onChange={(e) => onMorphTargetChange(name, parseFloat(e.target.value))}
-              className="w-full accent-blue-500 bg-white/20 rounded-lg appearance-none h-2 cursor-pointer"
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
