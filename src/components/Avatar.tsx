@@ -74,8 +74,6 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
   const previousAction = useRef<THREE.AnimationAction | null>(null)
   const lastAnimation = useRef<AnimationType | null>(null)
 
-  console.log('Avatar Animation:', animation);
-
   // Initialize mixer
   useEffect(() => {
     if (group.current) {
@@ -85,6 +83,8 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
 
   // Handle animations
   useEffect(() => {
+    console.log('Avatar Animation:', animation);
+
     if (!mixerRef.current) return;
     if (animation == 'none') {
       setCameraPosition(initialState);
@@ -164,9 +164,6 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
         Object.entries(morphTargets).forEach(([name, value]) => {
           const index = teethDict[name];
           if (typeof index !== 'undefined') {
-            if (value > 0 && name != 'viseme_sil') {
-              console.log('Setting teeth morph target:', name, value);
-            }            
             teethInfluences[index] = value;
           }
         });

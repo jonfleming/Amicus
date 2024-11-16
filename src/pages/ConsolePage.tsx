@@ -70,9 +70,6 @@ export function ConsolePage() {
   const [animation, setAnimation] = useState<AnimationType>('none');
 
   const handleMorphTargetChange = (name: string, value: number) => {
-    if (value != 0 && name != 'viseme_sil') {
-      console.log('handleMorphTargetChange: ', name, value);
-    }
     setMorphTargets(prev => ({
       ...prev,
       [name]: value

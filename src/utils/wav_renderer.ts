@@ -55,9 +55,10 @@ const normalizeArray = (
  * @returns Object containing viseme values
  */
 const getVisemeValues = (points: number[]): Record<string, number> => {
-  if (points.reduce((sum, val) => sum + val, 0) > 0) {
-    console.log("getVisemeValues:", points);
-  }
+  // Jon: I'm not getting any vowels.  veryLow is always 0.
+  // if (points.reduce((sum, val) => sum + val, 0) > 0) {
+  //   console.log("getVisemeValues:", points);
+  // }
 
   // Ensure we have enough points for analysis
   if (points.length < 10) {
@@ -111,9 +112,9 @@ const getVisemeValues = (points: number[]): Record<string, number> => {
   const maxAmp = Math.max(...Object.values(amplitudes));
   //if (amplitudes.veryLow > 0 || amplitudes.pbm > 0 || amplitudes.fv > 0 || amplitudes.w > 0 || amplitudes.r > 0 || amplitudes.sz > 0 || amplitudes.veryHigh > 0) {
   // Jon: not getting any vowels.  veryLow is always 0.
-    if (amplitudes.veryLow > 0) {
-    console.log("Amplitudes:", amplitudes);
-  }
+  // if (amplitudes.veryLow > 0) {
+  //   console.log("Amplitudes:", amplitudes);
+  // }
   const normalized = Object.fromEntries(
     Object.entries(amplitudes).map(([key, amp]) => [
       key,
