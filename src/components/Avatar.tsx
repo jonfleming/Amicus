@@ -164,6 +164,9 @@ export function Avatar({ morphTargets, animation, onAnimationStart, setCameraPos
         Object.entries(morphTargets).forEach(([name, value]) => {
           const index = teethDict[name];
           if (typeof index !== 'undefined') {
+            if (value > 0 && name != 'viseme_sil') {
+              console.log('Setting teeth morph target:', name, value);
+            }            
             teethInfluences[index] = value;
           }
         });

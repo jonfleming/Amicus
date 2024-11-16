@@ -24,9 +24,18 @@ import { Map } from '../components/Map';
 import { Scene } from '../components/Scene';
 import { MorphControls } from '../components/MorphControls';
 import type { AnimationType } from '../components/Avatar';
+import OpenAI from 'openai';
 
 import './ConsolePage.scss';
+
+
 const LOCAL_RELAY_SERVER_URL: string = process.env.REACT_APP_LOCAL_RELAY_SERVER_URL ?? '';
+const LOCAL_PROXY_SERVER_URL: string = process.env.REACT_APP_LOCAL_PROXY_URL ?? '';
+const openai = new OpenAI({
+  baseURL: `${LOCAL_PROXY_SERVER_URL}/v1`,
+  apiKey: 'ollama', // required but unused
+  dangerouslyAllowBrowser: true
+})
 
 /**
  * Type for result from get_weather() function call
@@ -244,7 +253,9 @@ export function ConsolePage() {
       const { trackId, offset } = trackSampleOffset;
       await client.cancelResponse(trackId, offset);
     }
-    await wavRecorder.record((data) => client.appendInputAudio(data.mono));
+    if (client.isConnected()) {
+      await wavRecorder.record((data) => client.appendInputAudio(data.mono));
+    }    
   };
 
   /**
@@ -358,7 +369,6 @@ export function ConsolePage() {
             }            
             // Data for voice visualization
             const visemes = WavRenderer.getVisemeData(result.values);
-            const sil = morphTargets['viseme_sil'];
             if (!silent(visemes)) {
               animateLips(visemes);
               quietRef.current = false;              
@@ -396,12 +406,44 @@ export function ConsolePage() {
     const wavStreamPlayer = wavStreamPlayerRef.current;
     const client = clientRef.current;
 
+    // voice
+    client.updateSession({ voice: 'alloy' });
     // Set instructions
     client.updateSession({ instructions: instructions });
     // Set transcription, otherwise we don't get user transcriptions back
     client.updateSession({ input_audio_transcription: { model: 'whisper-1' } });
 
     // Add tools
+    client.addTool(
+      {
+        name: 'get_context',
+        description: "Retrieves relevant context to help answer the users' question.",
+        parameters: {
+          type: 'object',
+          properties: {
+            question: {
+              type: 'string',
+              description:
+                "The user's question.",
+            },
+          },
+          required: ['question'],
+        },
+      },
+      async ({ question }: { [question: string]: any }) => {
+        console.log(`get_context() called with question ${question}:`);
+        const result = await fetch('https://files.fleming.ai/entities.txt');
+        const systemPrompt = await result.text();
+
+        const chatCompletion = await openai.chat.completions.create({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: question }],
+          model: 'gpt-3.5-turbo',
+        });
+        return `Question: ${question}\nContext: ${chatCompletion.choices[0].message.content}`;
+      }
+    );
     client.addTool(
       {
         name: 'set_memory',

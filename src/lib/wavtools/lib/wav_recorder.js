@@ -414,7 +414,8 @@ export class WavRecorder {
     if (!this.processor) {
       throw new Error('Session ended: please call .begin() first');
     } else if (!this.recording) {
-      throw new Error('Already paused: please call .record() first');
+      return true;
+      // throw new Error('Already paused: please call .record() first');
     }
     if (this._chunkProcessorBuffer.raw.byteLength) {
       this._chunkProcessor(this._chunkProcessorBuffer);

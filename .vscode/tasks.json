@@ -10,7 +10,7 @@
           "owner": "custom",
           "pattern": [
             {
-              "regexp": "\\[RealtimeRelay\\] Listening on ws://localhost:8081",
+              "regexp": "\\[RealtimeRelay\\] Express server Listening on http://localhost:8082",
               "file": 1,
               "location": 2,
               "message": 3
@@ -19,7 +19,7 @@
           "background": {
             "activeOnStart": true,
             "beginsPattern": "\\[RealtimeRelay\\]",
-            "endsPattern": "Listening on ws://localhost:8081"
+            "endsPattern": "Express server Listening on http://localhost:8082"
           }
         }
       ],

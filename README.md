@@ -19,3 +19,6 @@ C:\Projects\Amicus\node_modules\@mediapipe\tasks-vision>copy vision_bundle.mjs.m
   * When audio starts, start processing the viseme queue
   * Set morph target for viseme
 * Transition to next viseme after duration
+
+Add OpenAI API to relay-server on port 8082 to handle chat completion for GraphRAG
+

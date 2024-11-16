@@ -1,4 +1,6 @@
 import { WebSocketServer } from 'ws';
+import express from 'express';
+import OpenAI from 'openai';
 import { RealtimeClient } from '@openai/realtime-api-beta';
 
 export class RealtimeRelay {
@@ -6,12 +8,50 @@ export class RealtimeRelay {
     this.apiKey = apiKey;
     this.sockets = new WeakMap();
     this.wss = null;
+    this.expressApp = express();
+    this.setupExpressRoutes();
   }
 
-  listen(port) {
+  setupExpressRoutes() {
+    const client = new OpenAI(this.apiKey);
+
+    this.expressApp.use(express.json()) // for parsing application/json
+    this.expressApp.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+
+    try {
+      this.expressApp.post('/v1/chat/completions', express.json(), async (req, res) => {
+        const response = await client.chat.completions({
+          messages: req.body.messages,
+          model: req.body.model,
+        });
+        res.json(response.data);
+      });
+    } catch (error) {
+      console.error('Error forwarding request to OpenAI:', error);
+      res.status(500).send('Error forwarding request to OpenAI');
+    }
+
+    this.expressApp.post('/', express.json(), async (req, res) => {
+      console.log(req);
+      res.status(200).json({ body: req.body, url: req.url });
+    });
+
+    this.expressApp.post('/*', express.json(), async (req, res) => {
+      console.log(req);
+      res.status(200).json({ body: req.body, url: req.url });
+    });
+  }
+
+  wsListen(port) {
     this.wss = new WebSocketServer({ port });
     this.wss.on('connection', this.connectionHandler.bind(this));
     this.log(`Listening on ws://localhost:${port}`);
+  }
+
+  apiListen(port) {
+    this.expressApp.listen(port, () => {
+      this.log('Express server Listening on http://localhost:8082');
+    });
   }
 
   async connectionHandler(ws, req) {
