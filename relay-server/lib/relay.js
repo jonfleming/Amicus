@@ -15,12 +15,61 @@ export class RealtimeRelay {
   setupExpressRoutes() {
     const client = new OpenAI(this.apiKey);
 
+    // Add CORS middleware
+    this.expressApp.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', '*');
+      
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+      }
+      next();
+    });
+
     this.expressApp.use(express.json()) // for parsing application/json
     this.expressApp.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
+    // New endpoint for message classification
+    this.expressApp.post('/v1/classify', async (req, res) => {
+      try {
+        const userMessage = req.body.message;
+        if (!userMessage) {
+          return res.status(400).json({ error: 'Message is required' });
+        }
+
+        const response = await client.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content: "You are a classifier that determines if a message is a question or a statement. Respond with only 'question' or 'statement'."
+            },
+            {
+              role: "user",
+              content: userMessage
+            }
+          ],
+          model: "gpt-3.5-turbo",
+          temperature: 0,
+          max_tokens: 1
+        });
+
+        const classification = response.choices[0].message.content.toLowerCase();
+        res.json({ 
+          message: userMessage,
+          classification: classification
+        });
+      } catch (error) {
+        console.error('Error classifying message:', error);
+        res.status(500).json({ error: 'Error classifying message' });
+      }
+    });
+
     try {
       this.expressApp.post('/v1/chat/completions', express.json(), async (req, res) => {
-        const response = await client.chat.completions({
+        console.log(req);  
+        const response = await client.chat.completions.create({
           messages: req.body.messages,
           model: req.body.model,
         });

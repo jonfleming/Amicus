@@ -14,7 +14,7 @@ export function Toggle({
   onChange?: (isEnabled: boolean, value: string) => void;
 }) {
   if (typeof defaultValue === 'string') {
-    defaultValue = !!Math.max(0, (values || []).indexOf(defaultValue));
+    defaultValue = !!~(values || []).indexOf(defaultValue);
   }
 
   const leftRef = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export function Toggle({
       onClick={toggleValue}
       data-enabled={value.toString()}
       data-testid="Switch"
-      aria-checked={value}
+      aria-checked={value ? 'true' : 'false'}
     >
       {labels && (
         <div className="label left" ref={leftRef}>

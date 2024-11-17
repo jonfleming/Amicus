@@ -429,16 +429,9 @@ export function ConsolePage() {
       },
       async ({ question }: { [question: string]: any }) => {
         console.log(`get_context() called with question ${question}:`);
-        const result = await fetch('https://files.fleming.ai/entities.txt');
-        const systemPrompt = await result.text();
-
-        const chatCompletion = await openai.chat.completions.create({
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: question }],
-          model: 'gpt-3.5-turbo',
-        });
-        return `Question: ${question}\nContext: ${chatCompletion.choices[0].message.content}`;
+        const result = await fetch(`${LOCAL_PROXY_SERVER_URL}/similarity?question=${question}`); 
+        const context = await result.text();
+        return context;
       }
     );
     client.addTool(

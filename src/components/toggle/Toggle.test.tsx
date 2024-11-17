@@ -53,6 +53,6 @@ describe('Toggle', () => {
   it('respects string defaultValue prop', () => {
     render(<Toggle defaultValue="yes" values={['yes', 'no']} />);
     const toggle = screen.getByTestId('Switch');
-    expect(toggle).toHaveAttribute('aria-checked', undefined);
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
   });
 });
