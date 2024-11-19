@@ -27,6 +27,44 @@
       "port": 9229,
       "restart": true,
       "sourceMaps": true
+    },
+    {
+      "type": "node",
+      "name": "Debug Jest Tests",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "test",
+        "--",
+        "--runInBand",
+        "--no-cache",
+        "--watchAll=false",
+        "--transformIgnorePatterns",
+        "node_modules/(?!@openai/realtime-api-beta)/",
+        "${fileBasename}"
+      ],
+      "cwd": "${workspaceRoot}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "type": "node",
+      "name": "vscode-jest-tests",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "test",
+        "--",
+        "--runInBand",
+        "--watchAll=false",
+        "--transformIgnorePatterns",
+        "node_modules/(?!@openai/realtime-api-beta)/",
+        "--runTestsByPath",
+        "${workspaceFolder}"
+      ],
+      "cwd": "${workspaceRoot}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
     }
   ]
 }
